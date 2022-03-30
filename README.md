@@ -1,6 +1,6 @@
 # LocationMapper
 
-## What's is this
+## What's this
 [NMEA0183](https://www.hiramine.com/physicalcomputing/general/gps_nmeaformat.html)形式のGPSログデータから、DaVinci Resolve等の動画編集ソフトで読み込める連番画像を生成するWebアプリ(の、予定)  
 
 ## 背景
