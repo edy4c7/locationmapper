@@ -21,6 +21,10 @@ internal class MappingServiceTest {
         val img1 = PipedInputStream()
         val img2 = PipedInputStream()
         val workDir: Path = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper")
+        const val FPS = 30
+        const val ZOOM = 12
+        const val WIDTH = 1920
+        const val HEIGTH = 1080
 
         init {
             PipedOutputStream(img1).use { pos ->
@@ -55,20 +59,19 @@ internal class MappingServiceTest {
             }
 
             val zip = Files.createTempFile(workDir, "", ".zip")
-            val fps = 30
             zip.outputStream().use{ output ->
                 service.map(input, output)
 
                 verify(imageSource)
-                    .getMapImage(35.249268, 140.001861, null, 1920, 1080)
+                    .getMapImage(35.249268, 140.001861, ZOOM, WIDTH, HEIGTH)
                 verify(imageSource)
-                    .getMapImage(-35.249268, -140.001861, null, 1920, 1080)
+                    .getMapImage(-35.249268, -140.001861, ZOOM, WIDTH, HEIGTH)
             }
 
             ZipInputStream(zip.inputStream()).use { zis ->
                 var count = 0
                 while(zis.nextEntry != null) {
-                    val expect = imgs[count / fps]
+                    val expect = imgs[(count * 10 / FPS) / 10]
                     val actual = ByteArray(expect.size)
                     zis.read(actual)
                     Assertions.assertArrayEquals(expect, actual)
@@ -96,10 +99,9 @@ internal class MappingServiceTest {
             }
 
             val zip = Files.createTempFile(workDir, "", ".zip")
-            val fps = 30
             zip.outputStream().use { output ->
                 val ex = assertThrows<MapImageSourceException> {
-                    service.map(input, output, fps)
+                    service.map(input, output)
                 }
                 assertEquals(mse, ex)
             }

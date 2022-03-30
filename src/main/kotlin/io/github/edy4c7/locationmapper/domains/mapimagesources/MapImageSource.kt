@@ -8,8 +8,8 @@ internal interface MapImageSource {
     fun getMapImage(
         latitude: Double,
         longitude: Double,
-        zoom: Int? = null,
-        width: Int? = null,
-        height: Int? = null
+        width: Int,
+        height: Int,
+        zoom: Int
     ): InputStream
 }

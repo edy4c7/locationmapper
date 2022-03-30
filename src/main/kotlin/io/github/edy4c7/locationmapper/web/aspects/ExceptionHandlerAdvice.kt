@@ -1,0 +1,30 @@
+package io.github.edy4c7.locationmapper.web.aspects
+
+import io.github.edy4c7.locationmapper.domains.exceptions.MapImageSourceException
+import org.springframework.context.MessageSource
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+
+@RestControllerAdvice
+internal class ExceptionHandlerAdvice(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
+    @ExceptionHandler(MapImageSourceException::class)
+    fun handleMapImageSourceException(ex: MapImageSourceException, req: WebRequest): ResponseEntity<Any> {
+        return super.handleExceptionInternal(
+            ex,
+            messageSource.getMessage("mapimagesourceexception", null, req.locale),
+            HttpHeaders(),
+            HttpStatus.SERVICE_UNAVAILABLE,
+            req
+        )
+    }
+
+    @ExceptionHandler(Throwable::class)
+    fun handleThrowable(): ResponseEntity<String> {
+        return ResponseEntity<String>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+}
