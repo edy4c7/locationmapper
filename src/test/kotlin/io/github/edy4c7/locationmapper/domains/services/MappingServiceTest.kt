@@ -24,7 +24,7 @@ internal class MappingServiceTest {
         const val FPS = 30
         const val ZOOM = 12
         const val WIDTH = 1920
-        const val HEIGTH = 1080
+        const val HEIGHT = 1080
 
         init {
             PipedOutputStream(img1).use { pos ->
@@ -63,9 +63,9 @@ internal class MappingServiceTest {
                 service.map(input, output)
 
                 verify(imageSource)
-                    .getMapImage(35.249268, 140.001861, ZOOM, WIDTH, HEIGTH)
+                    .getMapImage(35.249268, 140.001861, ZOOM, WIDTH, HEIGHT)
                 verify(imageSource)
-                    .getMapImage(-35.249268, -140.001861, ZOOM, WIDTH, HEIGTH)
+                    .getMapImage(-35.249268, -140.001861, ZOOM, WIDTH, HEIGHT)
             }
 
             ZipInputStream(zip.inputStream()).use { zis ->

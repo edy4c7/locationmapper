@@ -13,8 +13,8 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.inputStream
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.outputStream
+import kotlin.streams.toList
 
 @Service
 internal class MappingService(
@@ -23,44 +23,37 @@ internal class MappingService(
 ) {
 
     companion object {
-        const val prefix = "map"
         const val suffix = ".png"
         const val FPS = 30
         const val ZOOM = 12
         const val WIDTH = 1920
         const val HEIGHT = 1080
+        const val GPRMC_HEADER = "\$GPRMC"
     }
 
-    fun map(input: InputStream, output : OutputStream) {
-        val outDir = Files.createTempDirectory(workDir, null)
-
-        BufferedReader(InputStreamReader(input)).use { br ->
-            br.lines()
-                .filter { it.startsWith("\$GPRMC") }
-                .map { it.split(",") }
-                .forEach {
-                    val lat = toDegreeLatLng(it[4], it[3])
-                    val lng = toDegreeLatLng(it[6], it[5])
-                    Files.createTempFile(outDir, prefix, suffix).outputStream().use { s ->
-                        mapSource.getMapImage(lat, lng, ZOOM, WIDTH, HEIGHT).transferTo(s)
-                    }
-                }
+    fun map(input: InputStream, output: OutputStream) {
+        val sentences = BufferedReader(InputStreamReader(input)).use { br ->
+            br.lines().filter { it.startsWith(GPRMC_HEADER) }.map { it.split(",") }.toList()
         }
 
-        var count = 0
-        val files = outDir.listDirectoryEntries("*$suffix").sortedWith(compareBy { it.toFile().lastModified() })
-        val digits = (files.count() * FPS).toString().length
+        val digits = (sentences.size * FPS).toString().length
+
         ZipOutputStream(output).use { zos ->
-            files.forEach { f ->
+            var count = 0
+            sentences.forEach {
+                val lat = toDegreeLatLng(it[4], it[3])
+                val lng = toDegreeLatLng(it[6], it[5])
+                val tmp = Files.createTempFile(workDir, "", suffix)
+
+                mapSource.getMapImage(lat, lng, ZOOM, WIDTH, HEIGHT).transferTo(tmp.outputStream())
                 for (i in 1..FPS) {
-                    zos.putNextEntry(ZipEntry(String.format("$prefix%0${digits}d.${f.toFile().extension}", count++)))
-                    f.inputStream().use { ist -> zos.write(ist.readAllBytes()) }
+                    zos.putNextEntry(ZipEntry(String.format("%0${digits}d.$suffix", count++)))
+                    tmp.inputStream().transferTo(zos)
                     zos.closeEntry()
                 }
-                f.deleteIfExists()
+
+                tmp.deleteIfExists()
             }
         }
-
-        outDir.deleteIfExists()
     }
 }
