@@ -22,9 +22,6 @@ internal class MappingServiceTest {
         val img2 = PipedInputStream()
         val workDir: Path = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper")
         const val FPS = 30
-        const val ZOOM = 12
-        const val WIDTH = 1920
-        const val HEIGHT = 1080
 
         init {
             PipedOutputStream(img1).use { pos ->
@@ -44,8 +41,8 @@ internal class MappingServiceTest {
     @Test
     fun mapIsSuccess() {
         val imageSource = mock<MapImageSource> {
-            on { getMapImage(eq(35.249268), eq(140.001861), anyOrNull(), anyOrNull(), anyOrNull()) } doReturn img1
-            on { getMapImage(eq(-35.249268), eq(-140.001861), anyOrNull(), anyOrNull(), anyOrNull()) } doReturn img2
+            on { getMapImage(eq(35.249268), eq(140.001861)) } doReturn img1
+            on { getMapImage(eq(-35.249268), eq(-140.001861)) } doReturn img2
         }
 
         val service = MappingService(imageSource, workDir)
@@ -63,9 +60,9 @@ internal class MappingServiceTest {
                 service.map(input, output)
 
                 verify(imageSource)
-                    .getMapImage(35.249268, 140.001861, ZOOM, WIDTH, HEIGHT)
+                    .getMapImage(35.249268, 140.001861)
                 verify(imageSource)
-                    .getMapImage(-35.249268, -140.001861, ZOOM, WIDTH, HEIGHT)
+                    .getMapImage(-35.249268, -140.001861)
             }
 
             ZipInputStream(zip.inputStream()).use { zis ->
@@ -86,7 +83,7 @@ internal class MappingServiceTest {
     fun mapIsFailCausedByMapSourceException() {
         val mse = MapImageSourceException()
         val imageSource = mock<MapImageSource>{
-            on { getMapImage(any(), any(), anyOrNull(), anyOrNull(), anyOrNull()) } doThrow mse
+            on { getMapImage(any(), any()) } doThrow mse
         }
 
         val service = MappingService(imageSource, workDir)

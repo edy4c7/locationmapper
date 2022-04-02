@@ -20,9 +20,6 @@ internal class MapQuestImageSourceTest {
         const val API_KEY = "API_KEY_123456"
         const val LATITUDE = 12.34
         const val LONGITUDE = 56.78
-        const val ZOOM = 12
-        const val WIDTH = 1920
-        const val HEIGHT = 1080
     }
 
     @Test
@@ -37,14 +34,12 @@ internal class MapQuestImageSourceTest {
 
         val mapQuestImageSource = MapQuestImageSource(httpClient, API_KEY)
 
-        mapQuestImageSource.getMapImage(LATITUDE, LONGITUDE, WIDTH, HEIGHT, ZOOM)
+        mapQuestImageSource.getMapImage(LATITUDE, LONGITUDE)
 
         val uri = StringBuilder(BASE_URL)
             .append("?key=$API_KEY")
             .append("&center=$LATITUDE,$LONGITUDE")
             .append("&format=png")
-            .append("&size=$WIDTH,$HEIGHT")
-            .append("&zoom=$ZOOM")
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create(uri.toString()))

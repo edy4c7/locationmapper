@@ -10,12 +10,10 @@ import java.net.http.HttpResponse
 internal class MapQuestImageSource(private val httpClient: HttpClient, apiKey: String) : MapImageSource {
     private val baseUri = "https://https://www.mapquestapi.com/staticmap/v5/map?key=$apiKey"
 
-    override fun getMapImage(latitude: Double, longitude: Double, width: Int, height: Int, zoom: Int): InputStream {
+    override fun getMapImage(latitude: Double, longitude: Double): InputStream {
         val reqUrl = StringBuilder(baseUri)
             .append("&center=$latitude,$longitude&")
             .append("format=png")
-            .append("&size=$width,$height")
-            .append("&zoom=$zoom")
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create(reqUrl.toString()))

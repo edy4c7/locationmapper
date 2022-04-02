@@ -25,9 +25,6 @@ internal class MappingService(
     companion object {
         const val suffix = ".png"
         const val FPS = 30
-        const val ZOOM = 12
-        const val WIDTH = 1920
-        const val HEIGHT = 1080
         const val GPRMC_HEADER = "\$GPRMC"
     }
 
@@ -45,7 +42,7 @@ internal class MappingService(
                 val lng = toDegreeLatLng(it[6], it[5])
                 val tmp = Files.createTempFile(workDir, "", suffix)
 
-                mapSource.getMapImage(lat, lng, ZOOM, WIDTH, HEIGHT).transferTo(tmp.outputStream())
+                mapSource.getMapImage(lat, lng).transferTo(tmp.outputStream())
                 for (i in 1..FPS) {
                     zos.putNextEntry(ZipEntry(String.format("%0${digits}d.$suffix", count++)))
                     tmp.inputStream().transferTo(zos)

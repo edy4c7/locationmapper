@@ -7,9 +7,6 @@ internal interface MapImageSource {
     @Throws(MapImageSourceException::class)
     fun getMapImage(
         latitude: Double,
-        longitude: Double,
-        width: Int,
-        height: Int,
-        zoom: Int
+        longitude: Double
     ): InputStream
 }
