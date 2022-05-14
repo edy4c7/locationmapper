@@ -1,16 +1,16 @@
 package io.github.edy4c7.locationmapper.domains.entities
 
 import io.github.edy4c7.locationmapper.domains.valueobjects.JobStatus
-import org.seasar.doma.Entity
-import org.seasar.doma.Id
-import org.seasar.doma.Version
+import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
+import java.time.LocalDateTime
 
-@Entity
-class Request {
+data class Request(
     @Id
-    var id: String = ""
-
-    var status: JobStatus = JobStatus.RESERVED
-
-    @Version var version: Long = -1
-}
+    var id: String = "",
+    var status: JobStatus = JobStatus.RESERVED,
+    @Version
+    var version: Long = 0,
+    var createdAt: LocalDateTime = LocalDateTime.MIN,
+    var updatedAt: LocalDateTime = LocalDateTime.MIN,
+)

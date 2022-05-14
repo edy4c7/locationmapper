@@ -6,7 +6,6 @@ plugins {
 	id("org.flywaydb.flyway") version "8.5.9"
 	kotlin("jvm") version "1.6.10"
 	kotlin("plugin.spring") version "1.6.10"
-	kotlin("kapt") version "1.6.21"
 }
 
 group = "io.github.edy4c7"
@@ -23,18 +22,17 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
 	implementation("org.seasar.doma.boot:doma-spring-boot-starter:1.6.0")
 	implementation("org.springframework.boot:spring-boot-starter-batch")
 	implementation("com.github.guepardoapps:kulid:2.0.0.0")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.seasar.doma:doma-kotlin:2.51.0")
 	implementation("com.h2database:h2:2.1.210")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
-	kapt("org.seasar.doma:doma-processor:2.51.0")
 	implementation("org.flywaydb:flyway-core:8.5.9")
 }
 

@@ -1,7 +1,7 @@
 package io.github.edy4c7.locationmapper.domains.tasklets
 
-import io.github.edy4c7.locationmapper.domains.dao.RequestDao
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.repositories.RequestsRepository
 import io.github.edy4c7.locationmapper.domains.utils.toDegreeLatLng
 import io.github.edy4c7.locationmapper.domains.valueobjects.JobStatus
 import org.springframework.batch.core.StepContribution
@@ -29,7 +29,7 @@ import kotlin.streams.toList
 internal class MappingTasklet (
     private val mapSource: MapImageSource,
     private val workDir: Path,
-    private val requestDao: RequestDao,
+    private val requestDao: RequestsRepository,
     @Value("#{jobParameters['request.id']}") private val requestId: String,
     private val input: InputStream,
     private val output: OutputStream
@@ -43,7 +43,7 @@ internal class MappingTasklet (
 
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus? {
         val requestId = chunkContext.stepContext.jobParameters["request.id"].toString()
-        val req = requestDao.selectById(requestId)
+        val req = requestDao.findById(requestId).get()
 
         val sentences = BufferedReader(InputStreamReader(input)).use { br ->
             br.lines().filter { it.startsWith(GPRMC_HEADER) }.map { it.split(",") }.toList()
@@ -70,7 +70,7 @@ internal class MappingTasklet (
         }
 
         req.status = JobStatus.COMPLETED
-        requestDao.update(req)
+        requestDao.save(req)
 
         return RepeatStatus.FINISHED
     }

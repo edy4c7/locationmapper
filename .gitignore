@@ -37,3 +37,4 @@ out/
 .vscode/
 /locationmapper.mv.db
 /locationmapper.trace.db
+/.env
