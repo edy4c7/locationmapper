@@ -3,7 +3,10 @@ package io.github.edy4c7.locationmapper.batch
 import io.github.edy4c7.locationmapper.domains.tasklets.MappingTasklet
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
-import org.springframework.batch.core.configuration.annotation.*
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
+import org.springframework.batch.core.configuration.annotation.JobScope
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
+import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,9 +14,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 
-@EnableBatchProcessing
 @Configuration
 class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
@@ -46,6 +49,10 @@ class BatchConfig(
 
     @Bean("workDir")
     fun workDir(): Path {
-        return Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper")
+        val path = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper")
+        if (!Files.exists(path)) {
+            Files.createDirectory(path)
+        }
+        return path
     }
 }
