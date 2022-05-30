@@ -13,6 +13,6 @@ import javax.servlet.http.HttpServletResponse
 internal class MapController(private val service: MappingService) {
     @PostMapping
     fun post(@RequestParam("nmea") nmea: MultipartFile, res: HttpServletResponse) {
-        service.requestProcess()
+        service.requestProcess(nmea.inputStream)
     }
 }
