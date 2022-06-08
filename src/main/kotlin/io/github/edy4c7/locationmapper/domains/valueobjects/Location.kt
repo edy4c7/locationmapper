@@ -1,12 +1,12 @@
 package io.github.edy4c7.locationmapper.domains.valueobjects
 
-data class LatAndLon constructor(
+data class Location constructor(
     val latitude: Double,
     val longitude: Double
 ) {
     companion object {
-        fun fromDegreeAndMinute(ns: String, lat: String, ew: String, lon: String ) : LatAndLon {
-           return LatAndLon(toDegree(ns, lat), toDegree(ew, lon))
+        fun fromDegreeAndMinute(ns: String, lat: String, ew: String, lon: String ) : Location {
+           return Location(toDegree(ns, lat), toDegree(ew, lon))
         }
 
         private fun toDegree(nsew: String, latLng: String) : Double {

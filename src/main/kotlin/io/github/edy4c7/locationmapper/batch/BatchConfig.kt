@@ -1,8 +1,10 @@
 package io.github.edy4c7.locationmapper.batch
 
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
-import io.github.edy4c7.locationmapper.domains.valueobjects.LatAndLon
-import org.springframework.batch.core.*
+import io.github.edy4c7.locationmapper.domains.valueobjects.Location
+import org.springframework.batch.core.Job
+import org.springframework.batch.core.JobExecution
+import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
@@ -83,7 +85,7 @@ class BatchConfig(
                 if (it.values[0] != GPRMC_HEADER) {
                     return@ItemProcessor null
                 }
-                val latLon = LatAndLon.fromDegreeAndMinute(it.values[4], it.values[3], it.values[6], it.values[5])
+                val latLon = Location.fromDegreeAndMinute(it.values[4], it.values[3], it.values[6], it.values[5])
                 val tmp = Files.createTempFile(workDir, "", suffix)
                 mapImageSource.getMapImage(latLon.latitude, latLon.longitude).transferTo(tmp.outputStream())
                 return@ItemProcessor tmp

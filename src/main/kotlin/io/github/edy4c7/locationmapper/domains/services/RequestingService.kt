@@ -15,7 +15,7 @@ import java.util.*
 import kotlin.io.path.outputStream
 
 @Service
-internal class MappingService(
+internal class RequestingService(
     private val jobLauncher: JobLauncher,
     private val mappingJob: Job,
     private val workDir: Path,
