@@ -31,6 +31,7 @@ class BatchConfig(
     private val stepBuilderFactory: StepBuilderFactory,
 ) {
     companion object {
+        const val GPRMC_HEADER = "\$GPRMC"
         const val FPS = 30
         const val suffix = ".png"
     }
@@ -45,7 +46,8 @@ class BatchConfig(
     fun countStep(@Value("#{jobExecution}")execution: JobExecution
         , @Value("#{jobParameters['request.id']}")id: String
         , @Value("#{jobParameters['input.file.name']}")inputFileName: String): Step {
-        val counter = AtomicInteger()
+        val counterTotal = AtomicInteger()
+        val counterGprmc = AtomicInteger()
         return stepBuilderFactory.get("count")
             .chunk<FieldSet, FieldSet>(10)
             .reader(FlatFileItemReaderBuilder<FieldSet>()
@@ -55,24 +57,17 @@ class BatchConfig(
                 .fieldSetMapper(PassThroughFieldSetMapper())
                 .build())
             .writer {
-                counter.addAndGet(it.size)
+                execution.executionContext.put("count.total", counterTotal.addAndGet(it.size))
+                execution.executionContext.put("count.gprmc", counterGprmc.addAndGet(
+                    it.stream().filter { e -> e.values[0] == GPRMC_HEADER }.count().toInt()))
             }
-            .listener(object: StepExecutionListener{
-                override fun beforeStep(stepExecution: StepExecution) { }
-
-                override fun afterStep(stepExecution: StepExecution): ExitStatus {
-                    println("total ${counter.get()}")
-                    execution.executionContext.put("total", counter.get())
-                    return stepExecution.exitStatus
-                }
-            })
             .build()
     }
 
     @JobScope
     @Bean
     fun mappingStep(@Value("#{jobExecution}")execution: JobExecution
-        ,workDir: Path, mapImageSource: MapImageSource
+        , workDir: Path, mapImageSource: MapImageSource
         , @Value("#{jobParameters['request.id']}")id: String
         , @Value("#{jobParameters['input.file.name']}")inputFileName: String
         , @Value("#{jobParameters['output.file.name']}")name: String): Step {
@@ -85,7 +80,7 @@ class BatchConfig(
                 .fieldSetMapper(PassThroughFieldSetMapper())
                 .build())
             .processor(ItemProcessor {
-                if (it.values[0] != "\$GPRMC") {
+                if (it.values[0] != GPRMC_HEADER) {
                     return@ItemProcessor null
                 }
                 val latLon = LatAndLon.fromDegreeAndMinute(it.values[4], it.values[3], it.values[6], it.values[5])
