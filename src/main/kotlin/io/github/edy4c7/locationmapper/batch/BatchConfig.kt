@@ -1,50 +1,114 @@
 package io.github.edy4c7.locationmapper.batch
 
-import io.github.edy4c7.locationmapper.domains.tasklets.MappingTasklet
-import org.springframework.batch.core.Job
-import org.springframework.batch.core.Step
+import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.valueobjects.LatAndLon
+import org.springframework.batch.core.*
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
-import org.springframework.batch.core.configuration.annotation.StepScope
+import org.springframework.batch.item.ItemProcessor
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
+import org.springframework.batch.item.file.mapping.PassThroughFieldSetMapper
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer
+import org.springframework.batch.item.file.transform.FieldSet
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.io.FileInputStream
+import org.springframework.core.io.FileSystemResource
 import java.io.FileOutputStream
-import java.io.InputStream
-import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.inputStream
+import kotlin.io.path.outputStream
 
 @Configuration
 class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
 ) {
+    companion object {
+        const val FPS = 30
+        const val suffix = ".png"
+    }
+
     @Bean
-    fun mappingJob(mappingStep: Step): Job {
-        return jobBuilderFactory.get("mappingJob").start(mappingStep).build()
+    fun mappingJob(countStep:Step, mappingStep: Step): Job {
+        return jobBuilderFactory.get("mappingJob").start(countStep).next(mappingStep).build()
     }
 
     @JobScope
     @Bean
-    internal fun mappingStep(mappingTasklet: MappingTasklet): Step {
-        return stepBuilderFactory.get("mapping")
-            .tasklet(mappingTasklet)
+    fun countStep(@Value("#{jobExecution}")execution: JobExecution
+        , @Value("#{jobParameters['request.id']}")id: String
+        , @Value("#{jobParameters['input.file.name']}")inputFileName: String): Step {
+        val counter = AtomicInteger()
+        return stepBuilderFactory.get("count")
+            .chunk<FieldSet, FieldSet>(10)
+            .reader(FlatFileItemReaderBuilder<FieldSet>()
+                .name(id)
+                .resource(FileSystemResource(inputFileName))
+                .lineTokenizer(DelimitedLineTokenizer())
+                .fieldSetMapper(PassThroughFieldSetMapper())
+                .build())
+            .writer {
+                counter.addAndGet(it.size)
+            }
+            .listener(object: StepExecutionListener{
+                override fun beforeStep(stepExecution: StepExecution) { }
+
+                override fun afterStep(stepExecution: StepExecution): ExitStatus {
+                    println("total ${counter.get()}")
+                    execution.executionContext.put("total", counter.get())
+                    return stepExecution.exitStatus
+                }
+            })
             .build()
     }
 
-    @StepScope
+    @JobScope
     @Bean
-    internal fun input(@Value("#{jobParameters['input.file.name']}")name: String): InputStream {
-        return FileInputStream(name)
-    }
+    fun mappingStep(@Value("#{jobExecution}")execution: JobExecution
+        ,workDir: Path, mapImageSource: MapImageSource
+        , @Value("#{jobParameters['request.id']}")id: String
+        , @Value("#{jobParameters['input.file.name']}")inputFileName: String
+        , @Value("#{jobParameters['output.file.name']}")name: String): Step {
+        return stepBuilderFactory.get("mapping")
+            .chunk<FieldSet, Path>(10)
+            .reader(FlatFileItemReaderBuilder<FieldSet>()
+                .name(id)
+                .resource(FileSystemResource(inputFileName))
+                .lineTokenizer(DelimitedLineTokenizer())
+                .fieldSetMapper(PassThroughFieldSetMapper())
+                .build())
+            .processor(ItemProcessor {
+                if (it.values[0] != "\$GPRMC") {
+                    return@ItemProcessor null
+                }
+                val latLon = LatAndLon.fromDegreeAndMinute(it.values[4], it.values[3], it.values[6], it.values[5])
+                val tmp = Files.createTempFile(workDir, "", suffix)
+                mapImageSource.getMapImage(latLon.latitude, latLon.longitude).transferTo(tmp.outputStream())
+                return@ItemProcessor tmp
+            })
+            .writer { items ->
+                val digits = (items.size * FPS).toString().length
+                ZipOutputStream(FileOutputStream(name)).use { zos ->
+                    var count = 0
+                    items.forEach {
+                        for (i in 1..FPS) {
+                            zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${suffix}", count++)))
+                            it.inputStream().transferTo(zos)
+                            zos.closeEntry()
+                        }
 
-    @StepScope
-    @Bean
-    internal fun output(@Value("#{jobParameters['output.file.name']}")name: String): OutputStream {
-        return FileOutputStream(name)
+                        it.deleteIfExists()
+                    }
+                }
+            }
+            .build()
     }
 
     @Bean("workDir")
