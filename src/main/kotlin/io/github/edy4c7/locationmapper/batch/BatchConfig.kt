@@ -18,14 +18,12 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.FileSystemResource
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.inputStream
-import kotlin.io.path.outputStream
 
 @Configuration
 class BatchConfig(
@@ -74,7 +72,7 @@ class BatchConfig(
         , @Value("#{jobParameters['input.file.name']}")inputFileName: String
         , @Value("#{jobParameters['output.file.name']}")name: String): Step {
         return stepBuilderFactory.get("mapping")
-            .chunk<FieldSet, Path>(10)
+            .chunk<FieldSet, InputStream>(10)
             .reader(FlatFileItemReaderBuilder<FieldSet>()
                 .name(id)
                 .resource(FileSystemResource(inputFileName))
@@ -86,22 +84,21 @@ class BatchConfig(
                     return@ItemProcessor null
                 }
                 val latLon = Location.fromDegreeAndMinute(it.values[4], it.values[3], it.values[6], it.values[5])
-                val tmp = Files.createTempFile(workDir, "", suffix)
-                mapImageSource.getMapImage(latLon.latitude, latLon.longitude).transferTo(tmp.outputStream())
-                return@ItemProcessor tmp
+                return@ItemProcessor mapImageSource.getMapImage(latLon.latitude, latLon.longitude)
             })
             .writer { items ->
                 val digits = (items.size * FPS).toString().length
                 ZipOutputStream(FileOutputStream(name)).use { zos ->
                     var count = 0
-                    items.forEach {
-                        for (i in 1..FPS) {
-                            zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${suffix}", count++)))
-                            it.inputStream().transferTo(zos)
-                            zos.closeEntry()
+                    items.forEach { item ->
+                        item.use {
+                            val bytes = item.readAllBytes()
+                            for (i in 1..FPS) {
+                                zos.putNextEntry(ZipEntry(String.format("%0${digits}d${suffix}", count++)))
+                                zos.write(bytes)
+                                zos.closeEntry()
+                            }
                         }
-
-                        it.deleteIfExists()
                     }
                 }
             }
