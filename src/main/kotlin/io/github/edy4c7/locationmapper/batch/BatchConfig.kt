@@ -1,13 +1,16 @@
 package io.github.edy4c7.locationmapper.batch
 
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.tasklets.SaveTokenTasklet
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobExecution
 import org.springframework.batch.core.Step
+import org.springframework.batch.core.annotation.AfterChunk
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
+import org.springframework.batch.core.scope.context.ChunkContext
 import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.batch.item.file.mapping.PassThroughFieldSetMapper
@@ -28,7 +31,7 @@ import java.util.zip.ZipOutputStream
 @Configuration
 class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
-    private val stepBuilderFactory: StepBuilderFactory,
+    private val stepBuilderFactory: StepBuilderFactory
 ) {
     companion object {
         const val GPRMC_HEADER = "\$GPRMC"
@@ -37,27 +40,30 @@ class BatchConfig(
     }
 
     @Bean
-    fun mappingJob(countStep:Step, mappingStep: Step): Job {
-        return jobBuilderFactory.get("mappingJob").start(countStep).next(mappingStep).build()
+    fun mappingJob(issueTokenStep:Step, countStep:Step, mappingStep: Step): Job {
+        return jobBuilderFactory.get("mappingJob").start(issueTokenStep).next(countStep).next(mappingStep).build()
+    }
+
+    @JobScope
+    @Bean
+    fun issueTokenStep(issueTokenTasklet: SaveTokenTasklet): Step {
+        return stepBuilderFactory.get("issueToken").tasklet(issueTokenTasklet).build()
     }
 
     @JobScope
     @Bean
     fun countStep(@Value("#{jobExecution}")execution: JobExecution
-        , @Value("#{jobParameters['request.id']}")id: String
         , @Value("#{jobParameters['input.file.name']}")inputFileName: String): Step {
-        val counterTotal = AtomicInteger()
         val counterGprmc = AtomicInteger()
         return stepBuilderFactory.get("count")
             .chunk<FieldSet, FieldSet>(10)
             .reader(FlatFileItemReaderBuilder<FieldSet>()
-                .name(id)
+                .name("count")
                 .resource(FileSystemResource(inputFileName))
                 .lineTokenizer(DelimitedLineTokenizer())
                 .fieldSetMapper(PassThroughFieldSetMapper())
                 .build())
             .writer {
-                execution.executionContext.put("count.total", counterTotal.addAndGet(it.size))
                 execution.executionContext.put("count.gprmc", counterGprmc.addAndGet(
                     it.stream().filter { e -> e.values[0] == GPRMC_HEADER }.count().toInt()))
             }
@@ -68,13 +74,12 @@ class BatchConfig(
     @Bean
     fun mappingStep(@Value("#{jobExecution}")execution: JobExecution
         , workDir: Path, mapImageSource: MapImageSource
-        , @Value("#{jobParameters['request.id']}")id: String
         , @Value("#{jobParameters['input.file.name']}")inputFileName: String
-        , @Value("#{jobParameters['output.file.name']}")name: String): Step {
+        , @Value("#{jobParameters['output.file.name']}")outputFileName: String): Step {
         return stepBuilderFactory.get("mapping")
             .chunk<FieldSet, InputStream>(10)
             .reader(FlatFileItemReaderBuilder<FieldSet>()
-                .name(id)
+                .name("mapping")
                 .resource(FileSystemResource(inputFileName))
                 .lineTokenizer(DelimitedLineTokenizer())
                 .fieldSetMapper(PassThroughFieldSetMapper())
@@ -88,7 +93,7 @@ class BatchConfig(
             })
             .writer { items ->
                 val digits = (items.size * FPS).toString().length
-                ZipOutputStream(FileOutputStream(name)).use { zos ->
+                ZipOutputStream(FileOutputStream(outputFileName)).use { zos ->
                     var count = 0
                     items.forEach { item ->
                         item.use {
@@ -102,6 +107,12 @@ class BatchConfig(
                     }
                 }
             }
+            .listener(object {
+                @AfterChunk
+                fun afterChunk(context: ChunkContext) {
+
+                }
+            })
             .build()
     }
 
