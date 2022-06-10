@@ -22,7 +22,7 @@ internal class BatchJobService(
 
     fun requestProcess(nmea: InputStream) : String {
         val filePath = Files.createTempFile(workDir, "", ".nmea")
-        val outFileName = filePath.fileName.toString().split("0")[0]
+        val outFileName = filePath.fileName.toString().split(".")[0]
         nmea.transferTo(filePath.outputStream())
         val token = UUID.randomUUID().toString()
         jobLauncher.run(mappingJob,
