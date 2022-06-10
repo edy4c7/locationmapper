@@ -22,13 +22,14 @@ internal class BatchJobService(
 
     fun requestProcess(nmea: InputStream) : String {
         val filePath = Files.createTempFile(workDir, "", ".nmea")
+        val outFileName = filePath.fileName.toString().split("0")[0]
         nmea.transferTo(filePath.outputStream())
         val token = UUID.randomUUID().toString()
         jobLauncher.run(mappingJob,
             JobParametersBuilder()
                 .addString("token", token)
                 .addString("input.file.name", filePath.toString())
-                .addString("output.file.name", filePath.fileName.toString())
+                .addString("output.file.name", workDir.resolve("$outFileName.zip").toString())
                 .toJobParameters()
          )
 
