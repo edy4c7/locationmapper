@@ -1,7 +1,7 @@
 package io.github.edy4c7.locationmapper.batch
 
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
-import io.github.edy4c7.locationmapper.domains.tasklets.SaveTokenTasklet
+import io.github.edy4c7.locationmapper.domains.tasklets.SaveMappingTasklet
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobExecution
@@ -40,14 +40,14 @@ class BatchConfig(
     }
 
     @Bean
-    fun mappingJob(issueTokenStep:Step, countStep:Step, mappingStep: Step): Job {
-        return jobBuilderFactory.get("mappingJob").start(issueTokenStep).next(countStep).next(mappingStep).build()
+    fun mappingJob(saveMappingStep: Step, countStep: Step, mappingStep: Step): Job {
+        return jobBuilderFactory.get("mappingJob").start(saveMappingStep).next(countStep).next(mappingStep).build()
     }
 
     @JobScope
     @Bean
-    fun issueTokenStep(issueTokenTasklet: SaveTokenTasklet): Step {
-        return stepBuilderFactory.get("issueToken").tasklet(issueTokenTasklet).build()
+    fun saveMappingStep(saveMappingTasklet: SaveMappingTasklet): Step {
+        return stepBuilderFactory.get("saveMapping").tasklet(saveMappingTasklet).build()
     }
 
     @JobScope
