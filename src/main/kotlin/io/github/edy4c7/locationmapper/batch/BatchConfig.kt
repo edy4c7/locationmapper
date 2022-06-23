@@ -7,6 +7,7 @@ import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobExecution
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.annotation.AfterChunk
+import org.springframework.batch.core.annotation.AfterWrite
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
@@ -37,6 +38,7 @@ class BatchConfig(
         const val GPRMC_HEADER = "\$GPRMC"
         const val FPS = 30
         const val suffix = ".png"
+        const val KEY_COUNT_COMPLETED = "count.completed"
     }
 
     @Bean
@@ -76,6 +78,7 @@ class BatchConfig(
         , workDir: Path, mapImageSource: MapImageSource
         , @Value("#{jobParameters['input.file.name']}")inputFileName: String
         , @Value("#{jobParameters['output.file.name']}")outputFileName: String): Step {
+        val counter = AtomicInteger()
         return stepBuilderFactory.get("mapping")
             .chunk<FieldSet, InputStream>(10)
             .reader(FlatFileItemReaderBuilder<FieldSet>()
@@ -108,9 +111,16 @@ class BatchConfig(
                 }
             }
             .listener(object {
+                @AfterWrite
+                @Suppress("UNUSED")
+                fun afterWrite(items: List<InputStream>) {
+                    counter.addAndGet(items.size)
+                }
                 @AfterChunk
+                @Suppress("UNUSED")
                 fun afterChunk(context: ChunkContext) {
-
+                    context.stepContext.stepExecution.jobExecution.executionContext
+                        .put(KEY_COUNT_COMPLETED, counter.get())
                 }
             })
             .build()

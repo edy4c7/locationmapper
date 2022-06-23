@@ -1,5 +1,6 @@
 package io.github.edy4c7.locationmapper.domains.services
 
+import io.github.edy4c7.locationmapper.domains.dto.JobProgress
 import io.github.edy4c7.locationmapper.domains.entities.Mapping
 import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
 import org.springframework.batch.core.*
@@ -51,11 +52,16 @@ internal class MappingService(
         return Base64.getUrlEncoder().encodeToString(buff.array())
     }
 
-    fun getProgress(id: String) : BatchStatus? {
+    fun getProgress(id: String) : JobProgress? {
         val buff = ByteBuffer.wrap(Base64.getUrlDecoder().decode(id))
         val uuid = UUID(buff.long, buff.long)
-        return mappingRepository.findById(uuid.toString()).map {
-            jobExplorer.getJobExecution(it.jobId)?.status
-        }.orElse(null)
+        return mappingRepository.findById(uuid.toString()).orElse(null)?.let {
+            jobExplorer.getJobExecution(it.jobId)
+        }?.executionContext?.let {
+            JobProgress(id
+                , if (it.containsKey("count.gprmc")) it.getInt("count.gprmc") else null
+                , if (it.containsKey("count.completed")) it.getInt("count.completed") else 0
+            )
+        }
     }
 }

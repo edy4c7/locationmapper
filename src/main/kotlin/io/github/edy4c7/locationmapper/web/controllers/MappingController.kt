@@ -1,7 +1,7 @@
 package io.github.edy4c7.locationmapper.web.controllers
 
+import io.github.edy4c7.locationmapper.domains.dto.JobProgress
 import io.github.edy4c7.locationmapper.domains.services.MappingService
-import org.springframework.batch.core.BatchStatus
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import javax.servlet.http.HttpServletResponse
@@ -15,7 +15,7 @@ internal class MappingController(private val service: MappingService) {
     }
 
     @GetMapping("/{id}")
-    fun get(@PathVariable id: String): BatchStatus? {
+    fun get(@PathVariable id: String): JobProgress? {
         return service.getProgress(id)
     }
 }
