@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+/locationmapper.mv.db
+/locationmapper.trace.db
+/.env
