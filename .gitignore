@@ -38,3 +38,4 @@ out/
 /locationmapper.mv.db
 /locationmapper.trace.db
 /.env
+.run

@@ -2,6 +2,7 @@ package io.github.edy4c7.locationmapper.batch
 
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
 import io.github.edy4c7.locationmapper.domains.tasklets.SaveMappingTasklet
+import io.github.edy4c7.locationmapper.domains.tasklets.UploadTasklet
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobExecution
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.FileSystemResource
+import software.amazon.awssdk.services.s3.S3Client
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Files
@@ -42,8 +44,9 @@ class BatchConfig(
     }
 
     @Bean
-    fun mappingJob(saveMappingStep: Step, countStep: Step, mappingStep: Step): Job {
-        return jobBuilderFactory.get("mappingJob").start(saveMappingStep).next(countStep).next(mappingStep).build()
+    fun mappingJob(saveMappingStep: Step, countStep: Step, mappingStep: Step, uploadStep: Step): Job {
+        return jobBuilderFactory.get("mappingJob").start(saveMappingStep).next(countStep).next(mappingStep)
+            .next(uploadStep).build()
     }
 
     @JobScope
@@ -116,6 +119,7 @@ class BatchConfig(
                 fun afterWrite(items: List<InputStream>) {
                     counter.addAndGet(items.size)
                 }
+
                 @AfterChunk
                 @Suppress("UNUSED")
                 fun afterChunk(context: ChunkContext) {
@@ -124,6 +128,17 @@ class BatchConfig(
                 }
             })
             .build()
+    }
+
+    @JobScope
+    @Bean
+    fun uploadStep(uploadTasklet: UploadTasklet): Step {
+        return stepBuilderFactory.get("upload").tasklet(uploadTasklet).build()
+    }
+
+    @Bean
+    fun s3Client() : S3Client {
+        return S3Client.create()
     }
 
     @Bean("workDir")

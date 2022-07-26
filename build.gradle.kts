@@ -34,6 +34,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 	implementation("org.flywaydb:flyway-core:8.5.9")
+	implementation("software.amazon.awssdk:s3:2.17.216")
 }
 
 tasks.withType<KotlinCompile> {
