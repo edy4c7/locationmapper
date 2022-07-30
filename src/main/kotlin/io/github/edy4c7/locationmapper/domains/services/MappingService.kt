@@ -3,7 +3,8 @@ package io.github.edy4c7.locationmapper.domains.services
 import io.github.edy4c7.locationmapper.domains.dto.JobProgress
 import io.github.edy4c7.locationmapper.domains.entities.Mapping
 import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
-import org.springframework.batch.core.*
+import org.springframework.batch.core.Job
+import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.explore.JobExplorer
 import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.stereotype.Service
@@ -30,20 +31,22 @@ internal class MappingService(
         nmea.transferTo(filePath.outputStream())
         val id = UUID.randomUUID()
 
-        val ent = mappingRepository.save(
-                Mapping(
+        val execution = jobLauncher.run(
+            mappingJob,
+            JobParametersBuilder()
+                .addString("mapping.id", id.toString())
+                .addString("input.file.name", filePath.toString())
+                .addString("output.file.name", workDir.resolve("$outFileName.zip").toString())
+                .toJobParameters()
+        )
+        mappingRepository.save(
+            Mapping(
                 id = id.toString(),
+                jobId = execution.id,
                 createdAt = LocalDateTime.now(),
                 updatedAt = LocalDateTime.now()
             )
         )
-        jobLauncher.run(mappingJob,
-            JobParametersBuilder()
-                .addString("mapping.id", ent.id)
-                .addString("input.file.name", filePath.toString())
-                .addString("output.file.name", workDir.resolve("$outFileName.zip").toString())
-                .toJobParameters()
-         )
 
         val buff = ByteBuffer.wrap(ByteArray(16))
             .putLong(id.mostSignificantBits)
