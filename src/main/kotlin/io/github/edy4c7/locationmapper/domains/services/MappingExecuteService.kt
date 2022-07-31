@@ -15,10 +15,7 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.io.path.outputStream
+import kotlin.io.path.*
 import kotlin.streams.toList
 
 @Service
@@ -61,7 +58,7 @@ class MappingExecuteService(
             }
         }
 
-        val url = storageClient.upload(output.name, output)
+        val url = storageClient.upload(output.name, "locationmapper.${output.extension}", output)
 
         mappingRepository.findById(id).unwrap()?.let {
             it.uploadedAt = LocalDateTime.now().minusHours(24)
