@@ -5,4 +5,6 @@ import java.nio.file.Path
 
 interface StorageClient {
     fun upload(key: String, data: Path): URL
+
+    fun delete(vararg keys: String)
 }

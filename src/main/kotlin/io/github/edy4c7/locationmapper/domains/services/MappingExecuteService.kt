@@ -1,7 +1,9 @@
 package io.github.edy4c7.locationmapper.domains.services
 
+import io.github.edy4c7.locationmapper.common.utils.unwrap
 import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
 import io.github.edy4c7.locationmapper.domains.utils.toDegreeLatLng
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
@@ -10,6 +12,7 @@ import java.io.InputStreamReader
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.deleteIfExists
@@ -22,6 +25,7 @@ import kotlin.streams.toList
 class MappingExecuteService(
     private val mapSource: MapImageSource,
     private val workDir: Path,
+    private val mappingRepository: MappingRepository,
     private val storageClient: StorageClient,
 ) {
     companion object {
@@ -57,6 +61,13 @@ class MappingExecuteService(
             }
         }
 
-        return storageClient.upload(output.name, output)
+        val url = storageClient.upload(output.name, output)
+
+        mappingRepository.findById(id).unwrap()?.let {
+            it.uploadedAt = LocalDateTime.now().minusHours(24)
+            mappingRepository.save(it)
+        }
+
+        return url
     }
 }

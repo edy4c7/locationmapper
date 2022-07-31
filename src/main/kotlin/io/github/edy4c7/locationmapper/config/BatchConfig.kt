@@ -1,5 +1,6 @@
 package io.github.edy4c7.locationmapper.config
 
+import io.github.edy4c7.locationmapper.batch.steps.ExpiringTasklet
 import io.github.edy4c7.locationmapper.batch.steps.MappingTasklet
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
@@ -19,7 +20,7 @@ import java.nio.file.Path
 @Configuration
 class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
-    private val stepBuilderFactory: StepBuilderFactory
+    private val stepBuilderFactory: StepBuilderFactory,
 ) : DefaultBatchConfigurer() {
 
     override fun createJobLauncher(): JobLauncher {
@@ -44,7 +45,20 @@ class BatchConfig(
     }
 
     @Bean
-    fun s3Client() : S3Client {
+    fun expiringJob(expiringStep: Step): Job {
+        return jobBuilderFactory.get("expiringJob").start(expiringStep).build()
+    }
+
+    @Bean
+    @JobScope
+    fun expiringStep(expiringTasklet: ExpiringTasklet): Step {
+        return stepBuilderFactory.get("expiring")
+            .tasklet(expiringTasklet)
+            .build()
+    }
+
+    @Bean
+    fun s3Client(): S3Client {
         return S3Client.create()
     }
 
