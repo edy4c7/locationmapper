@@ -66,7 +66,7 @@ class MappingExecuteService(
         val url = storageClient.upload(bucketName, output, "locationmapper.${output.extension}")
 
         mappingRepository.findById(id).unwrap()?.let {
-            it.uploadedAt = LocalDateTime.now().minusHours(24)
+            it.uploadedAt = LocalDateTime.now()
             mappingRepository.save(it)
         }
 
