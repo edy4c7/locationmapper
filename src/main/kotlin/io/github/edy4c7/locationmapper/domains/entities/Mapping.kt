@@ -8,6 +8,7 @@ data class Mapping(
     @Id
     var id: String = "",
     var jobId: Long = 0,
+    var uploadedAt: LocalDateTime = LocalDateTime.MIN,
     @Version
     var version: Long = 0,
     var createdAt: LocalDateTime = LocalDateTime.MIN,

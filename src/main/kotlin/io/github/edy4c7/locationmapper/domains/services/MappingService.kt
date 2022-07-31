@@ -2,6 +2,7 @@ package io.github.edy4c7.locationmapper.domains.services
 
 import io.github.edy4c7.locationmapper.domains.dto.JobProgress
 import io.github.edy4c7.locationmapper.domains.entities.Mapping
+import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParametersBuilder
@@ -17,15 +18,16 @@ import java.util.*
 import kotlin.io.path.outputStream
 
 @Service
-internal class MappingService(
+class MappingService(
     private val jobLauncher: JobLauncher,
     private val jobExplorer: JobExplorer,
     private val mappingJob: Job,
     private val mappingRepository: MappingRepository,
+    private val storageClient: StorageClient,
     private val workDir: Path,
 ) {
 
-    fun requestProcess(nmea: InputStream) : String {
+    fun requestProcess(nmea: InputStream): String {
         val filePath = Files.createTempFile(workDir, "", ".nmea")
         val outFileName = filePath.fileName.toString().split(".")[0]
         nmea.transferTo(filePath.outputStream())
@@ -61,10 +63,18 @@ internal class MappingService(
         return mappingRepository.findById(uuid.toString()).orElse(null)?.let {
             jobExplorer.getJobExecution(it.jobId)
         }?.executionContext?.let {
-            JobProgress(id
-                , if (it.containsKey("count.gprmc")) it.getInt("count.gprmc") else null
-                , if (it.containsKey("count.completed")) it.getInt("count.completed") else 0
+            JobProgress(
+                id,
+                if (it.containsKey("count.gprmc")) it.getInt("count.gprmc") else null,
+                if (it.containsKey("count.completed")) it.getInt("count.completed") else 0
             )
         }
+    }
+
+    fun expire(retentionPeriod: Int) {
+        val expireDate = LocalDateTime.now()
+        val targets = mappingRepository.findByUploadedAtLessThan(expireDate)
+
+        storageClient.delete(*targets.map { it.id }.toTypedArray())
     }
 }
