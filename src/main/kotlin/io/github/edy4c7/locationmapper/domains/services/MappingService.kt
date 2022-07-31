@@ -8,6 +8,7 @@ import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.explore.JobExplorer
 import org.springframework.batch.core.launch.JobLauncher
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -25,6 +26,7 @@ class MappingService(
     private val mappingRepository: MappingRepository,
     private val storageClient: StorageClient,
     private val workDir: Path,
+    @Value("\${s3.bucket}") private val bucketName: String,
 ) {
 
     fun requestProcess(nmea: InputStream): String {
@@ -75,6 +77,6 @@ class MappingService(
         val expireDate = LocalDateTime.now()
         val targets = mappingRepository.findByUploadedAtLessThan(expireDate)
 
-        storageClient.delete(*targets.map { it.id }.toTypedArray())
+        storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
     }
 }

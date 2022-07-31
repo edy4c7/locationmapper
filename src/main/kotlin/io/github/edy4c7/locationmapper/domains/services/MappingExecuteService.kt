@@ -5,6 +5,7 @@ import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
 import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
 import io.github.edy4c7.locationmapper.domains.utils.toDegreeLatLng
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
 import java.io.InputStream
@@ -15,13 +16,17 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.*
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.extension
+import kotlin.io.path.inputStream
+import kotlin.io.path.outputStream
 import kotlin.streams.toList
 
 @Service
 class MappingExecuteService(
     private val mapSource: MapImageSource,
     private val workDir: Path,
+    @Value("\${s3.bucket}") private val bucketName: String,
     private val mappingRepository: MappingRepository,
     private val storageClient: StorageClient,
 ) {
@@ -58,7 +63,7 @@ class MappingExecuteService(
             }
         }
 
-        val url = storageClient.upload(output.name, "locationmapper.${output.extension}", output)
+        val url = storageClient.upload(bucketName, output, "locationmapper.${output.extension}")
 
         mappingRepository.findById(id).unwrap()?.let {
             it.uploadedAt = LocalDateTime.now().minusHours(24)
