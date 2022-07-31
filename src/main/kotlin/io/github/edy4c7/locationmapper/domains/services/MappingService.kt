@@ -73,9 +73,8 @@ class MappingService(
         }
     }
 
-    fun expire(retentionPeriod: Int) {
-        val expireDate = LocalDateTime.now()
-        val targets = mappingRepository.findByUploadedAtLessThan(expireDate)
+    fun expire(retentionDateTime: LocalDateTime) {
+        val targets = mappingRepository.findByUploadedAtLessThan(retentionDateTime)
 
         storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
     }
