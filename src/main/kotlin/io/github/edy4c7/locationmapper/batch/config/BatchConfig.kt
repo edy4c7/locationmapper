@@ -1,4 +1,4 @@
-package io.github.edy4c7.locationmapper.config
+package io.github.edy4c7.locationmapper.batch.config
 
 import io.github.edy4c7.locationmapper.batch.steps.ExpiringTasklet
 import io.github.edy4c7.locationmapper.batch.steps.MappingTasklet
