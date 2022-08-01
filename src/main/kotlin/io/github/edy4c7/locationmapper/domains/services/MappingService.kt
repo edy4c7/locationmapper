@@ -31,7 +31,6 @@ class MappingService(
 
     fun requestProcess(nmea: InputStream): String {
         val filePath = Files.createTempFile(workDir, "", ".nmea")
-        val outFileName = filePath.fileName.toString().split(".")[0]
         nmea.transferTo(filePath.outputStream())
         val id = UUID.randomUUID()
 
@@ -40,7 +39,6 @@ class MappingService(
             JobParametersBuilder()
                 .addString("mapping.id", id.toString())
                 .addString("input.file.name", filePath.toString())
-                .addString("output.file.name", workDir.resolve("$outFileName.zip").toString())
                 .toJobParameters()
         )
         mappingRepository.save(
