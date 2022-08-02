@@ -1,6 +1,7 @@
 package io.github.edy4c7.locationmapper.infrastructures.mapimagesources
 
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.InputStream
@@ -13,9 +14,9 @@ import java.net.http.HttpResponse
 internal class MapQuestImageSource(private val httpClient: HttpClient, @Value("\${mapquest.apikey}") apiKey: String) : MapImageSource {
     private val baseUri = "https://www.mapquestapi.com/staticmap/v5/map?key=$apiKey"
 
-    override fun getMapImage(latitude: Double, longitude: Double): InputStream {
+    override fun getMapImage(location: Location): InputStream {
         val reqUrl = StringBuilder(baseUri)
-            .append("&center=$latitude,$longitude&")
+            .append("&center=${location.latitude},${location.longitude}&")
             .append("format=png")
 
         val request = HttpRequest.newBuilder()

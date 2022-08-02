@@ -98,7 +98,7 @@ class MappingService(
                 val tmp = Files.createTempFile(workDir, "", suffix)
                 val location = Location.fromGprmc(it)
 
-                mapSource.getMapImage(location.latitude, location.longitude).transferTo(tmp.outputStream())
+                mapSource.getMapImage(location).transferTo(tmp.outputStream())
                 for (i in 1..FPS) {
                     zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${suffix}", count++)))
                     tmp.inputStream().transferTo(zos)
