@@ -4,7 +4,7 @@ import io.github.edy4c7.locationmapper.common.utils.unwrap
 import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
 import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
-import io.github.edy4c7.locationmapper.domains.utils.toDegreeLatLng
+import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
@@ -38,7 +38,7 @@ class MappingExecuteService(
 
     fun map(id: String, input: InputStream): URL {
         val sentences = BufferedReader(InputStreamReader(input)).use { br ->
-            br.lines().filter { it.startsWith(GPRMC_HEADER) }.map { it.split(",") }.toList()
+            br.lines().filter { it.startsWith(GPRMC_HEADER) }.toList()
         }
 
         val digits = (sentences.size * FPS).toString().length
@@ -48,11 +48,10 @@ class MappingExecuteService(
         ZipOutputStream(output.outputStream()).use { zos ->
             var count = 0
             sentences.forEach {
-                val lat = toDegreeLatLng(it[4], it[3])
-                val lng = toDegreeLatLng(it[6], it[5])
                 val tmp = Files.createTempFile(workDir, "", suffix)
+                val location = Location.fromGprmc(it)
 
-                mapSource.getMapImage(lat, lng).transferTo(tmp.outputStream())
+                mapSource.getMapImage(location.latitude, location.longitude).transferTo(tmp.outputStream())
                 for (i in 1..FPS) {
                     zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${suffix}", count++)))
                     tmp.inputStream().transferTo(zos)

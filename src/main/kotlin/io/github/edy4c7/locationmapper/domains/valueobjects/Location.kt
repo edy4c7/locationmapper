@@ -5,11 +5,12 @@ data class Location constructor(
     val longitude: Double
 ) {
     companion object {
-        fun fromDegreeAndMinute(ns: String, lat: String, ew: String, lon: String ) : Location {
-           return Location(toDegree(ns, lat), toDegree(ew, lon))
+        fun fromGprmc(gprmc: String): Location {
+            val values = gprmc.split(",")
+            return Location(toDegree(values[4], values[3]), toDegree(values[6], values[5]))
         }
 
-        private fun toDegree(nsew: String, latLng: String) : Double {
+        private fun toDegree(nsew: String, latLng: String): Double {
             val minuteIndex = latLng.indexOf(".") - 2
             val deg = latLng.substring(0, minuteIndex).toDouble()
             val minute = latLng.substring(minuteIndex).toDouble()
