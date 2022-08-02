@@ -39,10 +39,10 @@ class MappingService(
     private val mapSource: MapImageSource,
     private val storageClient: StorageClient,
     private val workDir: Path,
-    @Value("\${s3.bucket}") private val bucketName: String,
+    @Value("\${storage.bucket}") private val bucketName: String,
 ) {
     companion object {
-        const val suffix = ".png"
+        const val IMAGE_SUFFIX = ".png"
         const val FPS = 30
         const val GPRMC_HEADER = "\$GPRMC"
     }
@@ -95,12 +95,12 @@ class MappingService(
         ZipOutputStream(output.outputStream()).use { zos ->
             var count = 0
             sentences.forEach {
-                val tmp = Files.createTempFile(workDir, "", suffix)
+                val tmp = Files.createTempFile(workDir, "", IMAGE_SUFFIX)
                 val location = Location.fromGprmc(it)
 
                 mapSource.getMapImage(location).transferTo(tmp.outputStream())
                 for (i in 1..FPS) {
-                    zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${suffix}", count++)))
+                    zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${IMAGE_SUFFIX}", count++)))
                     tmp.inputStream().transferTo(zos)
                     zos.closeEntry()
                 }
