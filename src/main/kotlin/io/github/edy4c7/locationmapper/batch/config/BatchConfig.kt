@@ -4,20 +4,17 @@ import io.github.edy4c7.locationmapper.batch.steps.ExpiringTasklet
 import io.github.edy4c7.locationmapper.batch.steps.MappingTasklet
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
-import org.springframework.batch.core.configuration.annotation.JobScope
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
+import org.springframework.batch.core.configuration.annotation.*
 import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.batch.core.launch.support.SimpleJobLauncher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.task.SimpleAsyncTaskExecutor
-import software.amazon.awssdk.services.s3.S3Client
-import java.nio.file.Files
-import java.nio.file.Path
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @Configuration
+@EnableBatchProcessing
+@EnableScheduling
 class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
@@ -55,19 +52,5 @@ class BatchConfig(
         return stepBuilderFactory.get("expiring")
             .tasklet(expiringTasklet)
             .build()
-    }
-
-    @Bean
-    fun s3Client(): S3Client {
-        return S3Client.create()
-    }
-
-    @Bean
-    fun workDir(): Path {
-        val path = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper")
-        if (!Files.exists(path)) {
-            Files.createDirectory(path)
-        }
-        return path
     }
 }

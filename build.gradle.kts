@@ -23,7 +23,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-	implementation("org.seasar.doma.boot:doma-spring-boot-starter:1.6.0")
 	implementation("org.springframework.boot:spring-boot-starter-batch")
 	implementation("com.github.guepardoapps:kulid:2.0.0.0")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
