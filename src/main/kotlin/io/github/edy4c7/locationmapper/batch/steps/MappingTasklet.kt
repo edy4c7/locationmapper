@@ -13,13 +13,13 @@ import java.io.FileInputStream
 @Component
 @StepScope
 class MappingTasklet(
-    @Value("#{jobParameters['mapping.id']}") private val requestId: String,
-    @Value("#{jobParameters['input.file.name']}") private val inputFileName: String,
+    @Value("#{jobParameters['id']}") private val id: String,
+    @Value("#{jobParameters['input']}") private val inputFileName: String,
     private val service: MappingService,
 ) : Tasklet {
 
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus? {
-        service.map(requestId, FileInputStream(inputFileName))
+        service.map(id, FileInputStream(inputFileName))
         return RepeatStatus.FINISHED
     }
 }
