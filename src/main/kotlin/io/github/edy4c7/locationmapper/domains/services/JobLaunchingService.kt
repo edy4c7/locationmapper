@@ -1,13 +1,12 @@
 package io.github.edy4c7.locationmapper.domains.services
 
+import io.github.edy4c7.locationmapper.domains.entities.BatchJobStatus
 import io.github.edy4c7.locationmapper.domains.repositories.BatchJobStatusRepository
-import org.springframework.batch.core.BatchStatus
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.launch.JobLauncher
 import org.springframework.stereotype.Service
 import java.io.InputStream
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -29,27 +28,20 @@ class JobLaunchingService(
     fun launchJob(nmea: InputStream): String {
         val filePath = Files.createTempFile(workDir, "", ".nmea")
         nmea.transferTo(filePath.outputStream())
-        val id = UUID.randomUUID()
+        val id = UUID.randomUUID().toString()
 
         jobLauncher.run(
             mappingJob,
             JobParametersBuilder()
-                .addString("id", id.toString())
+                .addString("id", id)
                 .addString("input", filePath.toString())
                 .toJobParameters()
         )
 
-        val buff = ByteBuffer.wrap(ByteArray(16))
-            .putLong(id.mostSignificantBits)
-            .putLong(id.leastSignificantBits)
-
-        return Base64.getUrlEncoder().encodeToString(buff.array())
+        return id
     }
 
-    fun getJobProgress(id: String): BatchStatus? {
-        val buff = ByteBuffer.wrap(Base64.getUrlDecoder().decode(id))
-        val uuid = UUID(buff.long, buff.long).toString()
-
-        return batchJobStatusRepository.findByMappingId(uuid).status
+    fun getJobProgress(id: String): BatchJobStatus? {
+        return batchJobStatusRepository.findByMappingId(id)
     }
 }
