@@ -14,7 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 internal class ExceptionHandlerAdvice(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
     @ExceptionHandler(MapImageSourceException::class)
     fun handleMapImageSourceException(ex: MapImageSourceException, req: WebRequest): ResponseEntity<Any> {
-        return super.handleExceptionInternal(
+        return handleExceptionInternal(
             ex,
             messageSource.getMessage("mapimagesourceexception", null, req.locale),
             HttpHeaders(),
@@ -25,12 +25,23 @@ internal class ExceptionHandlerAdvice(private val messageSource: MessageSource) 
 
     @ExceptionHandler(Exception::class)
     fun handleThrowable(ex: Exception, req: WebRequest): ResponseEntity<Any> {
-        return super.handleExceptionInternal(
+        return handleExceptionInternal(
             ex,
             "Internal error",
             HttpHeaders(),
             HttpStatus.INTERNAL_SERVER_ERROR,
             req
         )
+    }
+
+    override fun handleExceptionInternal(
+        ex: java.lang.Exception,
+        body: Any?,
+        headers: HttpHeaders,
+        status: HttpStatus,
+        request: WebRequest,
+    ): ResponseEntity<Any> {
+        logger.error(ex)
+        return super.handleExceptionInternal(ex, body, headers, status, request)
     }
 }
