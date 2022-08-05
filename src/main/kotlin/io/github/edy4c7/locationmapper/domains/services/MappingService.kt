@@ -29,6 +29,7 @@ class MappingService(
     private val workDir: Path,
     @Value("\${storage.bucket}") private val bucketName: String,
     @Value("\${cdn}") private val cdnOrigin: String,
+    @Value("\${fileRetentionPeriod}") private val fileRetentionPeriod: String,
 ) {
 
     fun map(id: String, input: InputStream) {
@@ -64,16 +65,19 @@ class MappingService(
             Upload(
                 id = id,
                 url = "$cdnOrigin/$key",
-                uploadedAt = LocalDateTime.now(),
+                expiredAt = LocalDateTime.now().plusHours(fileRetentionPeriod.toLong()),
                 createdAt = LocalDateTime.now(),
                 updatedAt = LocalDateTime.now()
             )
         )
     }
 
-    fun expire(retentionDateTime: LocalDateTime) {
-        val targets = uploadRepository.findByUploadedAtLessThan(retentionDateTime)
+    fun expire() {
+        val targets = uploadRepository.findByExpiredAtLessThan(LocalDateTime.now())
 
-        storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
+        if (targets.isNotEmpty()) {
+            val deleted = storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
+            uploadRepository.deleteAllById(deleted.map { it.split(".")[0] })
+        }
     }
 }

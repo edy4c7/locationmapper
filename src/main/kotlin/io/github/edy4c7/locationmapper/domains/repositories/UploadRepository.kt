@@ -6,5 +6,5 @@ import java.time.LocalDateTime
 
 interface UploadRepository : CrudRepository<Upload, String> {
     @Suppress("UNUSED")
-    fun findByUploadedAtLessThan(uploadedAt: LocalDateTime): Iterable<Upload>
+    fun findByExpiredAtLessThan(expiredAt: LocalDateTime): List<Upload>
 }

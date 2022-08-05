@@ -7,7 +7,6 @@ import org.springframework.batch.core.scope.context.ChunkContext
 import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.repeat.RepeatStatus
 import org.springframework.stereotype.Component
-import java.time.ZoneId
 
 @Component
 @StepScope
@@ -15,9 +14,7 @@ class ExpiringTasklet(
     private val service: MappingService,
 ) : Tasklet {
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus? {
-        contribution.stepExecution.jobExecution.jobParameters.getDate("retentionDateTime")?.let {
-            service.expire(it.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime())
-        }
+        service.expire()
         return RepeatStatus.FINISHED
     }
 }

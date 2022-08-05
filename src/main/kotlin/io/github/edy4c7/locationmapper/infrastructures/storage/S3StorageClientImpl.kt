@@ -24,10 +24,13 @@ class S3StorageClient(private val client: S3Client) :
         return req.key()
     }
 
-    override fun delete(bucketName: String, vararg keys: String) {
+    override fun delete(bucketName: String, vararg keys: String): List<String> {
         val delete = Delete.builder().objects(keys.map {
             ObjectIdentifier.builder().key(it).build()
         }).build()
-        client.deleteObjects(DeleteObjectsRequest.builder().bucket(bucketName).delete(delete).build())
+        val res = client.deleteObjects(DeleteObjectsRequest.builder().bucket(bucketName).delete(delete).build())
+        return res.deleted().map {
+            it.key()
+        }
     }
 }

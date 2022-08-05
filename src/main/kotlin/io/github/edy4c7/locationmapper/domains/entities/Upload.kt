@@ -8,7 +8,7 @@ data class Upload(
     @Id
     var id: String = "",
     var url: String = "",
-    var uploadedAt: LocalDateTime = LocalDateTime.MIN,
+    var expiredAt: LocalDateTime = LocalDateTime.MIN,
     @Version
     var version: Long = 0,
     var createdAt: LocalDateTime = LocalDateTime.MIN,
