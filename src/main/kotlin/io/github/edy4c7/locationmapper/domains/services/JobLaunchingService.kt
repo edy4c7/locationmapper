@@ -1,7 +1,7 @@
 package io.github.edy4c7.locationmapper.domains.services
 
 import io.github.edy4c7.locationmapper.domains.entities.BatchJobStatus
-import io.github.edy4c7.locationmapper.domains.repositories.BatchJobStatusRepository
+import io.github.edy4c7.locationmapper.domains.repositories.MyJobRepository
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.launch.JobLauncher
@@ -16,7 +16,7 @@ import kotlin.io.path.outputStream
 class JobLaunchingService(
     private val jobLauncher: JobLauncher,
     private val mappingJob: Job,
-    private val batchJobStatusRepository: BatchJobStatusRepository,
+    private val jobRepository: MyJobRepository,
     private val workDir: Path,
 ) {
     companion object {
@@ -42,6 +42,6 @@ class JobLaunchingService(
     }
 
     fun getJobProgress(id: String): BatchJobStatus? {
-        return batchJobStatusRepository.findByMappingId(id)
+        return jobRepository.findByMappingId(id)
     }
 }
