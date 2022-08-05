@@ -8,13 +8,16 @@ import org.springframework.data.repository.query.Param
 interface BatchJobStatusRepository : CrudRepository<BatchJobStatus, String> {
     @Query("""
         SELECT
-            STRING_VAL MAPPING_ID,
-            STATUS
+            STRING_VAL ID,
+            STATUS,
+            URL
         FROM BATCH_JOB_INSTANCE INSTNS
         LEFT OUTER JOIN BATCH_JOB_EXECUTION EXECUTION
 	        ON INSTNS.JOB_INSTANCE_ID = EXECUTION.JOB_INSTANCE_ID
         LEFT OUTER JOIN BATCH_JOB_EXECUTION_PARAMS PARAMS
         	ON EXECUTION.JOB_EXECUTION_ID = PARAMS.JOB_EXECUTION_ID
+        LEFT OUTER JOIN UPLOAD
+            ON PARAMS.STRING_VAL = UPLOAD.ID
         WHERE
             JOB_NAME = 'mappingJob'
             AND KEY_NAME = 'id' 

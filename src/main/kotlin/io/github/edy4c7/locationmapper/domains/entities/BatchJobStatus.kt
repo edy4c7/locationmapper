@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id
 
 data class BatchJobStatus(
     @Id
-    val mappingId: String,
+    val id: String,
     val status: BatchStatus,
+    val url: String?,
 )

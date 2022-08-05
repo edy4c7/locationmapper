@@ -4,22 +4,24 @@ import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.*
-import java.net.URL
+import software.amazon.awssdk.services.s3.model.Delete
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.nio.file.Path
 import kotlin.io.path.name
 
 @Component
 class S3StorageClient(private val client: S3Client) :
     StorageClient {
-    override fun upload(bucketName: String, data: Path, attachmentName: String): URL {
-        client.putObject(
-            PutObjectRequest.builder().bucket(bucketName).key(data.name)
-                .contentDisposition("attachment; filename=\"$attachmentName\"")
-                .build(),
-            RequestBody.fromFile(data)
-        )
-        return client.utilities().getUrl(GetUrlRequest.builder().bucket(bucketName).key(data.name).build())
+    override fun upload(bucketName: String, data: Path, attachmentName: String): String {
+        val req = PutObjectRequest.builder().bucket(bucketName).key(data.name)
+            .contentDisposition("attachment; filename=\"$attachmentName\"")
+            .build()
+
+        client.putObject(req, RequestBody.fromFile(data))
+
+        return req.key()
     }
 
     override fun delete(bucketName: String, vararg keys: String) {
