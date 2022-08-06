@@ -6,6 +6,7 @@ import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.*
 import org.springframework.batch.core.launch.JobLauncher
+import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.launch.support.SimpleJobLauncher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -43,7 +44,11 @@ class BatchConfig(
 
     @Bean
     fun expiringJob(expiringStep: Step): Job {
-        return jobBuilderFactory.get("expiringJob").start(expiringStep).build()
+        return jobBuilderFactory
+            .get("expiringJob")
+            .incrementer(RunIdIncrementer())
+            .start(expiringStep)
+            .build()
     }
 
     @Bean
