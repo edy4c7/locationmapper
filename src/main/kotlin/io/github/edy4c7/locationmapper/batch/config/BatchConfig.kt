@@ -4,13 +4,13 @@ import io.github.edy4c7.locationmapper.batch.steps.ExpiringTasklet
 import io.github.edy4c7.locationmapper.batch.steps.MappingTasklet
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
-import org.springframework.batch.core.configuration.annotation.*
-import org.springframework.batch.core.launch.JobLauncher
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
+import org.springframework.batch.core.configuration.annotation.JobScope
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
 import org.springframework.batch.core.launch.support.RunIdIncrementer
-import org.springframework.batch.core.launch.support.SimpleJobLauncher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.annotation.EnableScheduling
 
 @Configuration
@@ -19,16 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
-) : DefaultBatchConfigurer() {
-
-    override fun createJobLauncher(): JobLauncher {
-        val jobLauncher = SimpleJobLauncher()
-        jobLauncher.setJobRepository(jobRepository)
-        jobLauncher.setTaskExecutor(SimpleAsyncTaskExecutor())
-        jobLauncher.afterPropertiesSet()
-        return jobLauncher
-    }
-
+) {
     @Bean
     fun mappingJob(mappingStep: Step): Job {
         return jobBuilderFactory.get("mappingJob").start(mappingStep).build()
