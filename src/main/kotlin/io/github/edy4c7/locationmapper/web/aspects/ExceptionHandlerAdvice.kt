@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
@@ -29,15 +30,10 @@ internal class ExceptionHandlerAdvice(private val messageSource: MessageSource) 
         return handleExceptionInternal(ex, null, HttpHeaders(), HttpStatus.NOT_FOUND, req)
     }
 
-    @ExceptionHandler(Exception::class)
-    fun handleThrowable(ex: Exception, req: WebRequest): ResponseEntity<Any> {
-        return handleExceptionInternal(
-            ex,
-            "Internal error",
-            HttpHeaders(),
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            req
-        )
+    @ExceptionHandler(Throwable::class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleThrowable(th: Throwable) {
+        logger.error(th)
     }
 
     override fun handleExceptionInternal(
