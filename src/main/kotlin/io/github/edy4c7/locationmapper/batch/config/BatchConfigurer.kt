@@ -6,6 +6,9 @@ import org.springframework.batch.core.launch.support.SimpleJobLauncher
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.stereotype.Component
 
+/**
+ * Components factory for batch process
+ */
 @Component
 class BatchConfigurer : DefaultBatchConfigurer() {
     override fun createJobLauncher(): JobLauncher {

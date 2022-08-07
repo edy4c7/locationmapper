@@ -5,6 +5,10 @@ data class Location constructor(
     val longitude: Double
 ) {
     companion object {
+        /**
+         * Create instance by parsing $GPRMC Sentence of NMEA0183.
+         * @param gprmc String representation of $GPRMC sentence <br/>
+         */
         fun fromGprmc(gprmc: String): Location {
             val values = gprmc.split(",")
             return Location(toDegree(values[4], values[3]), toDegree(values[6], values[5]))
