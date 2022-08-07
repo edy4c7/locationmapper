@@ -19,7 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 @Configuration
 @EnableBatchProcessing
 @EnableScheduling
-class BatchConfig(
+private class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
 ) {

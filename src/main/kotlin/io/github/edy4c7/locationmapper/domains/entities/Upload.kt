@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Version
 import java.time.LocalDateTime
 
-data class Upload(
+internal data class Upload(
     @Id
     var id: String = "",
     var url: String = "",

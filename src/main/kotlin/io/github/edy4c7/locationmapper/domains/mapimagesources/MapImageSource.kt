@@ -4,7 +4,7 @@ import io.github.edy4c7.locationmapper.domains.exceptions.MapImageSourceExceptio
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import java.io.InputStream
 
-interface MapImageSource {
+internal interface MapImageSource {
     @Throws(MapImageSourceException::class)
     fun getMapImage(location: Location): InputStream
 }

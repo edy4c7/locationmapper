@@ -12,7 +12,7 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 @Component
-class S3StorageClient(private val client: S3Client) :
+internal class S3StorageClient(private val client: S3Client) :
     StorageClient {
     override fun upload(bucketName: String, data: Path, attachmentName: String): String {
         val req = PutObjectRequest.builder().bucket(bucketName).key(data.name)

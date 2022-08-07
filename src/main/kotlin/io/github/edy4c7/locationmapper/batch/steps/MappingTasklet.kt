@@ -12,7 +12,7 @@ import java.io.FileInputStream
 
 @Component
 @StepScope
-class MappingTasklet(
+internal class MappingTasklet(
     @Value("#{jobParameters['id']}") private val id: String,
     @Value("#{jobParameters['input']}") private val inputFileName: String,
     private val service: MappingService,

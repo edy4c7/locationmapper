@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
  * Components factory for batch process
  */
 @Component
-class BatchConfigurer : DefaultBatchConfigurer() {
+private class BatchConfigurer : DefaultBatchConfigurer() {
     override fun createJobLauncher(): JobLauncher {
         val jobLauncher = SimpleJobLauncher()
         jobLauncher.setJobRepository(jobRepository)

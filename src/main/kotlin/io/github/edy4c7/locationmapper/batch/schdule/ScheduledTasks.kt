@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 @Component
-class ScheduledTasks(
+private class ScheduledTasks(
     private val jobLauncher: JobLauncher,
     private val jobExplorer: JobExplorer,
     private val expiringJob: Job,

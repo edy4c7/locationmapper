@@ -22,7 +22,7 @@ import kotlin.io.path.outputStream
 import kotlin.streams.toList
 
 @Service
-class MappingService(
+internal class MappingService(
     private val mapSource: MapImageSource,
     private val storageClient: StorageClient,
     private val uploadRepository: UploadRepository,

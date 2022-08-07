@@ -8,7 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @Configuration
-class Config {
+private class Config {
     @Bean
     fun httpClient(): HttpClient {
         return HttpClient.newHttpClient()

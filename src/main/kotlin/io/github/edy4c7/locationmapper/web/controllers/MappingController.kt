@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse
 
 @RestController
 @RequestMapping("/mapping")
-internal class MappingController(private val service: JobLaunchingService) {
+private class MappingController(private val service: JobLaunchingService) {
     @PostMapping
     fun post(@RequestParam("nmea") nmea: MultipartFile, res: HttpServletResponse): Map<String, String> {
         return mapOf("id" to service.launchJob(nmea.inputStream))

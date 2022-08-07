@@ -13,7 +13,7 @@ import java.util.*
 import kotlin.io.path.outputStream
 
 @Service
-class JobLaunchingService(
+internal class JobLaunchingService(
     private val jobLauncher: JobLauncher,
     private val mappingJob: Job,
     private val jobRepository: MappingJobRepository,

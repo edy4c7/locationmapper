@@ -1,8 +1,8 @@
 package io.github.edy4c7.locationmapper.domains.valueobjects
 
-data class Location constructor(
+internal data class Location constructor(
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
 ) {
     companion object {
         /**

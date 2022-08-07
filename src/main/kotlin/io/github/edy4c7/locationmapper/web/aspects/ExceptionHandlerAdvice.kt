@@ -13,7 +13,7 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 @ControllerAdvice
-internal class ExceptionHandlerAdvice(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
+private class ExceptionHandlerAdvice(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
     @ExceptionHandler(MapImageSourceException::class)
     fun handleMapImageSourceException(ex: MapImageSourceException, req: WebRequest): ResponseEntity<Any> {
         return handleExceptionInternal(

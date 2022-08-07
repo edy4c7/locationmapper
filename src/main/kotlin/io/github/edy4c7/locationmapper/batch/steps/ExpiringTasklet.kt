@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @StepScope
-class ExpiringTasklet(
+internal class ExpiringTasklet(
     private val service: MappingService,
 ) : Tasklet {
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus? {
