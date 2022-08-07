@@ -2,6 +2,7 @@ package io.github.edy4c7.locationmapper.web.aspects
 
 import io.github.edy4c7.locationmapper.domains.exceptions.MapImageSourceException
 import org.springframework.context.MessageSource
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -21,6 +22,11 @@ internal class ExceptionHandlerAdvice(private val messageSource: MessageSource) 
             HttpStatus.SERVICE_UNAVAILABLE,
             req
         )
+    }
+
+    @ExceptionHandler(EmptyResultDataAccessException::class)
+    fun handleEmptyResult(ex: Exception, req: WebRequest): ResponseEntity<Any> {
+        return handleExceptionInternal(ex, null, HttpHeaders(), HttpStatus.NOT_FOUND, req)
     }
 
     @ExceptionHandler(Exception::class)
