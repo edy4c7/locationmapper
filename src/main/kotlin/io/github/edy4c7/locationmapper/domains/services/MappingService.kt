@@ -1,80 +1,89 @@
 package io.github.edy4c7.locationmapper.domains.services
 
-import io.github.edy4c7.locationmapper.domains.dto.JobProgress
-import io.github.edy4c7.locationmapper.domains.entities.Mapping
+import io.github.edy4c7.locationmapper.domains.entities.Upload
 import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
-import io.github.edy4c7.locationmapper.domains.repositories.MappingRepository
-import org.springframework.batch.core.Job
-import org.springframework.batch.core.JobParametersBuilder
-import org.springframework.batch.core.explore.JobExplorer
-import org.springframework.batch.core.launch.JobLauncher
+import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
+import io.github.edy4c7.locationmapper.domains.valueobjects.Location
+import org.apache.commons.logging.Log
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.io.BufferedReader
 import java.io.InputStream
-import java.nio.ByteBuffer
+import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
-import java.util.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.extension
+import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
+import kotlin.streams.toList
 
 @Service
-class MappingService(
-    private val jobLauncher: JobLauncher,
-    private val jobExplorer: JobExplorer,
-    private val mappingJob: Job,
-    private val mappingRepository: MappingRepository,
+internal class MappingService(
+    private val mapSource: MapImageSource,
     private val storageClient: StorageClient,
+    private val uploadRepository: UploadRepository,
     private val workDir: Path,
+    @Value("\${storage.bucket}") private val bucketName: String,
+    @Value("\${cdn}") private val cdnOrigin: String,
+    @Value("\${fileRetentionPeriod}") private val fileRetentionPeriod: String,
+    private val log: Log,
 ) {
 
-    fun requestProcess(nmea: InputStream): String {
-        val filePath = Files.createTempFile(workDir, "", ".nmea")
-        val outFileName = filePath.fileName.toString().split(".")[0]
-        nmea.transferTo(filePath.outputStream())
-        val id = UUID.randomUUID()
+    fun map(id: String, input: InputStream) {
+        val sentences = BufferedReader(InputStreamReader(input)).use { br ->
+            br.lines().filter { it.startsWith(JobLaunchingService.GPRMC_HEADER) }.toList()
+        }
 
-        val execution = jobLauncher.run(
-            mappingJob,
-            JobParametersBuilder()
-                .addString("mapping.id", id.toString())
-                .addString("input.file.name", filePath.toString())
-                .addString("output.file.name", workDir.resolve("$outFileName.zip").toString())
-                .toJobParameters()
-        )
-        mappingRepository.save(
-            Mapping(
-                id = id.toString(),
-                jobId = execution.id,
+        val digits = (sentences.size * JobLaunchingService.FPS).toString().length
+
+        val output = workDir.resolve("$id.zip")
+
+        ZipOutputStream(output.outputStream()).use { zos ->
+            var count = 0
+            sentences.forEach {
+                val tmp = Files.createTempFile(workDir, "", JobLaunchingService.IMAGE_SUFFIX)
+                val location = Location.fromGprmc(it)
+
+                mapSource.getMapImage(location).transferTo(tmp.outputStream())
+                for (i in 1..JobLaunchingService.FPS) {
+                    zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${JobLaunchingService.IMAGE_SUFFIX}",
+                        count++)))
+                    tmp.inputStream().transferTo(zos)
+                    zos.closeEntry()
+                }
+
+                tmp.deleteIfExists()
+            }
+        }
+
+        val key = storageClient.upload(bucketName, output, "locationmapper.${output.extension}")
+
+        uploadRepository.save(
+            Upload(
+                id = id,
+                url = "$cdnOrigin/$key",
+                expiredAt = LocalDateTime.now().plusHours(fileRetentionPeriod.toLong()),
                 createdAt = LocalDateTime.now(),
                 updatedAt = LocalDateTime.now()
             )
         )
-
-        val buff = ByteBuffer.wrap(ByteArray(16))
-            .putLong(id.mostSignificantBits)
-            .putLong(id.leastSignificantBits)
-
-        return Base64.getUrlEncoder().encodeToString(buff.array())
     }
 
-    fun getProgress(id: String) : JobProgress? {
-        val buff = ByteBuffer.wrap(Base64.getUrlDecoder().decode(id))
-        val uuid = UUID(buff.long, buff.long)
-        return mappingRepository.findById(uuid.toString()).orElse(null)?.let {
-            jobExplorer.getJobExecution(it.jobId)
-        }?.executionContext?.let {
-            JobProgress(
-                id,
-                if (it.containsKey("count.gprmc")) it.getInt("count.gprmc") else null,
-                if (it.containsKey("count.completed")) it.getInt("count.completed") else 0
-            )
+    fun expire() {
+        val targets = uploadRepository.findByExpiredAtLessThan(LocalDateTime.now())
+
+        if (targets.isEmpty()) {
+            log.info("No files to delete.")
+            return
         }
-    }
 
-    fun expire(retentionPeriod: Int) {
-        val expireDate = LocalDateTime.now()
-        val targets = mappingRepository.findByUploadedAtLessThan(expireDate)
-
-        storageClient.delete(*targets.map { it.id }.toTypedArray())
+        val deleted = storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
+        uploadRepository.deleteAllById(deleted.map { it.split(".")[0] })
+        log.info("${deleted.size} files are deleted ($deleted).")
     }
 }

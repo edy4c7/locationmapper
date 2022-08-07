@@ -1,5 +1,6 @@
 package io.github.edy4c7.locationmapper.infrastructures
 
+import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import io.github.edy4c7.locationmapper.infrastructures.mapimagesources.MapQuestImageSource
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -34,7 +35,7 @@ internal class MapQuestImageSourceTest {
 
         val mapQuestImageSource = MapQuestImageSource(httpClient, API_KEY)
 
-        mapQuestImageSource.getMapImage(LATITUDE, LONGITUDE)
+        mapQuestImageSource.getMapImage(Location(LATITUDE, LONGITUDE))
 
         val uri = StringBuilder(BASE_URL)
             .append("?key=$API_KEY")

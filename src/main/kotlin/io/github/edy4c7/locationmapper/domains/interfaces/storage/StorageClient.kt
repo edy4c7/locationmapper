@@ -1,10 +1,9 @@
 package io.github.edy4c7.locationmapper.domains.interfaces.storage
 
-import java.net.URL
 import java.nio.file.Path
 
-interface StorageClient {
-    fun upload(key: String, data: Path): URL
+internal interface StorageClient {
+    fun upload(bucketName: String, data: Path, attachmentName: String): String
 
-    fun delete(vararg keys: String)
+    fun delete(bucketName: String, vararg keys: String): List<String>
 }

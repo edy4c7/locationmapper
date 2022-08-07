@@ -1,6 +1,6 @@
 package io.github.edy4c7.locationmapper.batch.steps
 
-import io.github.edy4c7.locationmapper.domains.services.MappingExecuteService
+import io.github.edy4c7.locationmapper.domains.services.MappingService
 import org.springframework.batch.core.StepContribution
 import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -12,14 +12,14 @@ import java.io.FileInputStream
 
 @Component
 @StepScope
-class MappingTasklet (
-    @Value("#{jobParameters['mapping.id']}")private val requestId: String,
-    @Value("#{jobParameters['input.file.name']}")private val inputFileName: String,
-    private val service: MappingExecuteService,
+internal class MappingTasklet(
+    @Value("#{jobParameters['id']}") private val id: String,
+    @Value("#{jobParameters['input']}") private val inputFileName: String,
+    private val service: MappingService,
 ) : Tasklet {
 
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus? {
-        service.map(requestId, FileInputStream(inputFileName))
+        service.map(id, FileInputStream(inputFileName))
         return RepeatStatus.FINISHED
     }
 }

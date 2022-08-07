@@ -4,11 +4,11 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Version
 import java.time.LocalDateTime
 
-data class Mapping(
+internal data class Upload(
     @Id
     var id: String = "",
-    var jobId: Long = 0,
-    var uploadedAt: LocalDateTime = LocalDateTime.MIN,
+    var url: String = "",
+    var expiredAt: LocalDateTime = LocalDateTime.MIN,
     @Version
     var version: Long = 0,
     var createdAt: LocalDateTime = LocalDateTime.MIN,
