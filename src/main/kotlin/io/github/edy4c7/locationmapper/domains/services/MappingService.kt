@@ -5,6 +5,7 @@ import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
 import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
+import org.apache.commons.logging.Log
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
@@ -30,6 +31,7 @@ internal class MappingService(
     @Value("\${storage.bucket}") private val bucketName: String,
     @Value("\${cdn}") private val cdnOrigin: String,
     @Value("\${fileRetentionPeriod}") private val fileRetentionPeriod: String,
+    private val log: Log,
 ) {
 
     fun map(id: String, input: InputStream) {
@@ -75,9 +77,13 @@ internal class MappingService(
     fun expire() {
         val targets = uploadRepository.findByExpiredAtLessThan(LocalDateTime.now())
 
-        if (targets.isNotEmpty()) {
-            val deleted = storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
-            uploadRepository.deleteAllById(deleted.map { it.split(".")[0] })
+        if (targets.isEmpty()) {
+            log.info("No files to delete.")
+            return
         }
+
+        val deleted = storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
+        uploadRepository.deleteAllById(deleted.map { it.split(".")[0] })
+        log.info("${deleted.size} files are deleted ($deleted).")
     }
 }
