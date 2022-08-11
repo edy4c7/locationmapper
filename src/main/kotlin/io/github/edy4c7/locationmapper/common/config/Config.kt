@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.BeanCreationException
 import org.springframework.beans.factory.InjectionPoint
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Scope
@@ -25,8 +26,8 @@ private class Config {
     }
 
     @Bean
-    fun workDir(): Path {
-        val path = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper")
+    fun workDir(@Value("\${workdir:locationmapper}") dirName: String): Path {
+        val path = Path.of(System.getProperty("java.io.tmpdir")).resolve(dirName)
         if (!Files.exists(path)) {
             Files.createDirectory(path)
         }
