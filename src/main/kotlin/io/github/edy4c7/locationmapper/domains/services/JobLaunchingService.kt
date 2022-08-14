@@ -19,11 +19,6 @@ internal class JobLaunchingService(
     private val jobRepository: MappingJobRepository,
     private val workDir: Path,
 ) {
-    companion object {
-        const val IMAGE_SUFFIX = ".png"
-        const val FPS = 30
-        const val GPRMC_HEADER = "\$GPRMC"
-    }
 
     fun launchJob(nmea: InputStream): String {
         val filePath = Files.createTempFile(workDir, "", ".nmea")

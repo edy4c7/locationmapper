@@ -33,25 +33,30 @@ internal class MappingService(
     @Value("\${fileRetentionPeriod}") private val fileRetentionPeriod: String,
     private val log: Log,
 ) {
+    companion object {
+        const val IMAGE_SUFFIX = ".png"
+        const val FPS = 30
+        const val GPRMC_HEADER = "\$GPRMC"
+    }
 
     fun map(id: String, input: InputStream) {
         val sentences = BufferedReader(InputStreamReader(input)).use { br ->
-            br.lines().filter { it.startsWith(JobLaunchingService.GPRMC_HEADER) }.toList()
+            br.lines().filter { it.startsWith(GPRMC_HEADER) }.toList()
         }
 
-        val digits = (sentences.size * JobLaunchingService.FPS).toString().length
+        val digits = (sentences.size * FPS).toString().length
 
         val output = workDir.resolve("$id.zip")
 
         ZipOutputStream(output.outputStream()).use { zos ->
             var count = 0
             sentences.forEach {
-                val tmp = Files.createTempFile(workDir, "", JobLaunchingService.IMAGE_SUFFIX)
+                val tmp = Files.createTempFile(workDir, "", IMAGE_SUFFIX)
                 val location = Location.fromGprmc(it)
 
                 mapSource.getMapImage(location).transferTo(tmp.outputStream())
-                for (i in 1..JobLaunchingService.FPS) {
-                    zos.putNextEntry(ZipEntry(String.format("%0${digits}d.${JobLaunchingService.IMAGE_SUFFIX}",
+                for (i in 1..FPS) {
+                    zos.putNextEntry(ZipEntry(String.format("%0${digits}d${IMAGE_SUFFIX}",
                         count++)))
                     tmp.inputStream().transferTo(zos)
                     zos.closeEntry()
@@ -62,14 +67,15 @@ internal class MappingService(
         }
 
         val key = storageClient.upload(bucketName, output, "locationmapper.${output.extension}")
+        val timestamp = LocalDateTime.now()
 
         uploadRepository.save(
             Upload(
                 id = id,
                 url = "$cdnOrigin/$key",
-                expiredAt = LocalDateTime.now().plusHours(fileRetentionPeriod.toLong()),
-                createdAt = LocalDateTime.now(),
-                updatedAt = LocalDateTime.now()
+                expiredAt = timestamp.plusHours(fileRetentionPeriod.toLong()),
+                createdAt = timestamp,
+                updatedAt = timestamp
             )
         )
     }

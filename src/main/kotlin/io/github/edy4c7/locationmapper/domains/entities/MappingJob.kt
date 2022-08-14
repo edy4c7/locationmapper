@@ -7,5 +7,5 @@ internal data class MappingJob(
     @Id
     val id: String,
     val status: BatchStatus,
-    val url: String?,
+    val url: String? = null,
 )
