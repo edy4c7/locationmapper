@@ -31,7 +31,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+	testImplementation("com.ninja-squad:springmockk:3.0.1")
 	implementation("org.flywaydb:flyway-core:8.5.9")
 	implementation("software.amazon.awssdk:s3:2.17.216")
 }

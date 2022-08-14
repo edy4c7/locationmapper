@@ -2,11 +2,10 @@ package io.github.edy4c7.locationmapper.infrastructures
 
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import io.github.edy4c7.locationmapper.infrastructures.mapimagesources.MapQuestImageSource
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.net.URI
@@ -17,7 +16,7 @@ import java.util.concurrent.CompletableFuture
 
 internal class MapQuestImageSourceTest {
     companion object{
-        const val BASE_URL = "https://https://www.mapquestapi.com/staticmap/v5/map"
+        const val BASE_URL = "https://www.mapquestapi.com/staticmap/v5/map"
         const val API_KEY = "API_KEY_123456"
         const val LATITUDE = 12.34
         const val LONGITUDE = 56.78
@@ -25,13 +24,11 @@ internal class MapQuestImageSourceTest {
 
     @Test
     fun successGetMapImage() {
-        val response = mock<HttpResponse<InputStream>> {
-            on { body() } doReturn ByteArrayInputStream(byteArrayOf(0x12, 0x34))
-        }
+        val response = mockk<HttpResponse<InputStream>>(relaxed = true)
+        every { response.body() } returns ByteArrayInputStream(byteArrayOf(0x12, 0x34))
 
-        val httpClient = mock<HttpClient> {
-            on { sendAsync<InputStream>(any(), any()) } doReturn CompletableFuture.completedFuture(response)
-        }
+        val httpClient = mockk<HttpClient>(relaxed = true)
+        every { httpClient.sendAsync<InputStream>(any(), any()) } returns CompletableFuture.completedFuture(response)
 
         val mapQuestImageSource = MapQuestImageSource(httpClient, API_KEY)
 
@@ -47,6 +44,6 @@ internal class MapQuestImageSourceTest {
             .GET()
             .build()
 
-        verify(httpClient).sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+        verify { httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()) }
     }
 }
