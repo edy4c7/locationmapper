@@ -1,7 +1,5 @@
 package io.github.edy4c7.locationmapper.web.aspects
 
-import io.github.edy4c7.locationmapper.domains.exceptions.MapImageSourceException
-import org.springframework.context.MessageSource
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -13,18 +11,7 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 @ControllerAdvice
-private class ExceptionHandlerAdvice(private val messageSource: MessageSource) : ResponseEntityExceptionHandler() {
-    @ExceptionHandler(MapImageSourceException::class)
-    fun handleMapImageSourceException(ex: MapImageSourceException, req: WebRequest): ResponseEntity<Any> {
-        return handleExceptionInternal(
-            ex,
-            messageSource.getMessage("mapimagesourceexception", null, req.locale),
-            HttpHeaders(),
-            HttpStatus.SERVICE_UNAVAILABLE,
-            req
-        )
-    }
-
+private class ExceptionHandlerAdvice : ResponseEntityExceptionHandler() {
     @ExceptionHandler(EmptyResultDataAccessException::class)
     fun handleEmptyResult(ex: Exception, req: WebRequest): ResponseEntity<Any> {
         return handleExceptionInternal(ex, null, HttpHeaders(), HttpStatus.NOT_FOUND, req)

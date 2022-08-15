@@ -1,5 +1,6 @@
 package io.github.edy4c7.locationmapper.infrastructures
 
+import io.github.edy4c7.locationmapper.domains.exceptions.SystemException
 import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.springframework.beans.factory.annotation.Value
@@ -24,6 +25,12 @@ internal class MapQuestImageSource(private val httpClient: HttpClient, @Value("\
             .uri(URI.create(reqUrl.toString()))
             .build()
 
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).get().body()
+        val response = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).get()
+        val statusClass = (response.statusCode()) / 100
+        if (statusClass == 4 || statusClass == 5) {
+            throw SystemException("MapQuest api returned status ${response.statusCode()}")
+        }
+
+        return response.body()
     }
 }

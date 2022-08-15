@@ -1,10 +1,12 @@
 package io.github.edy4c7.locationmapper.infrastructures
 
+import io.github.edy4c7.locationmapper.domains.exceptions.SystemException
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.net.URI
@@ -24,6 +26,7 @@ internal class MapQuestImageSourceTest {
     @Test
     fun successGetMapImage() {
         val response = mockk<HttpResponse<InputStream>>(relaxed = true)
+        every { response.statusCode() } returns 200
         every { response.body() } returns ByteArrayInputStream(byteArrayOf(0x12, 0x34))
 
         val httpClient = mockk<HttpClient>(relaxed = true)
@@ -44,5 +47,37 @@ internal class MapQuestImageSourceTest {
             .build()
 
         verify { httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()) }
+    }
+
+    @Test
+    fun failedGetMapImage400() {
+        val response = mockk<HttpResponse<InputStream>>(relaxed = true)
+        every { response.body() } returns ByteArrayInputStream(ByteArray(0))
+        every { response.statusCode() } returns 400
+
+        val httpClient = mockk<HttpClient>(relaxed = true)
+        every { httpClient.sendAsync<InputStream>(any(), any()) } returns CompletableFuture.completedFuture(response)
+
+        val mapQuestImageSource = MapQuestImageSource(httpClient, API_KEY)
+
+        assertThrows<SystemException>("MapQuest api returned status 400") {
+            mapQuestImageSource.getMapImage(Location(LATITUDE, LONGITUDE))
+        }
+    }
+
+    @Test
+    fun failedGetMapImage500() {
+        val response = mockk<HttpResponse<InputStream>>(relaxed = true)
+        every { response.body() } returns ByteArrayInputStream(ByteArray(0))
+        every { response.statusCode() } returns 500
+
+        val httpClient = mockk<HttpClient>(relaxed = true)
+        every { httpClient.sendAsync<InputStream>(any(), any()) } returns CompletableFuture.completedFuture(response)
+
+        val mapQuestImageSource = MapQuestImageSource(httpClient, API_KEY)
+
+        assertThrows<SystemException>("MapQuest api returned status 500") {
+            mapQuestImageSource.getMapImage(Location(LATITUDE, LONGITUDE))
+        }
     }
 }
