@@ -119,7 +119,7 @@ private class MappingServiceTests {
         val fileName = "$id.zip"
         val filePath = workDir.resolve(fileName)
         every { workDir.resolve(fileName) } returns filePath
-        every { storageClient.upload(any(), any(), any()) } answers { secondArg<Path>().name }
+        every { storageClient.upload(any(), any(), any(), any()) } answers { arg<Path>(3).name }
         val ist = ByteArrayInputStream(sentences.toByteArray())
         every { uploadRepository.save(any()) } answers { firstArg() }
 
@@ -129,7 +129,8 @@ private class MappingServiceTests {
             mapImageSource.getMapImage(Location(36.0, 140.0))
             mapImageSource.getMapImage(Location(37.0, 141.0))
             mapImageSource.getMapImage(Location(38.0, 142.0))
-            storageClient.upload(bucketName, filePath, "locationmapper.zip")
+            storageClient.upload(bucketName, filePath.name, "locationmapper.zip", filePath)
+
             uploadRepository.save(Upload(
                 id = id,
                 url = "$cdnOrigin/${filePath.name}",

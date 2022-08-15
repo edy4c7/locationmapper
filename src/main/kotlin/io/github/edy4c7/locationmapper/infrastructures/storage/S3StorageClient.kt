@@ -2,7 +2,6 @@ package io.github.edy4c7.locationmapper.infrastructures.storage
 
 import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
 import org.springframework.stereotype.Component
-import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.Delete
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest
@@ -14,12 +13,12 @@ import kotlin.io.path.name
 @Component
 internal class S3StorageClient(private val client: S3Client) :
     StorageClient {
-    override fun upload(bucketName: String, data: Path, attachmentName: String): String {
+    override fun upload(bucketName: String, key: String, attachmentName: String, data: Path): String {
         val req = PutObjectRequest.builder().bucket(bucketName).key(data.name)
             .contentDisposition("attachment; filename=\"$attachmentName\"")
             .build()
 
-        client.putObject(req, RequestBody.fromFile(data))
+        client.putObject(req, data)
 
         return req.key()
     }

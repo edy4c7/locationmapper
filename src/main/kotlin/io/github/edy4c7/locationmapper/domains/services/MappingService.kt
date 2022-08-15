@@ -16,10 +16,7 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.extension
-import kotlin.io.path.inputStream
-import kotlin.io.path.outputStream
+import kotlin.io.path.*
 import kotlin.streams.toList
 
 @Service
@@ -66,7 +63,8 @@ internal class MappingService(
             }
         }
 
-        val key = storageClient.upload(bucketName, output, "locationmapper.${output.extension}")
+        val key = storageClient.upload(bucketName, output.name,
+            "locationmapper.${output.extension}", output)
         val timestamp = LocalDateTime.now()
 
         uploadRepository.save(
