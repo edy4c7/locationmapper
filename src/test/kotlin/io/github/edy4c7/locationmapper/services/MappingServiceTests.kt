@@ -4,8 +4,8 @@ import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import io.github.edy4c7.config.TestConfig
 import io.github.edy4c7.locationmapper.domains.entities.Upload
-import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
-import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
+import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
 import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
 import io.github.edy4c7.locationmapper.domains.services.MappingService
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location

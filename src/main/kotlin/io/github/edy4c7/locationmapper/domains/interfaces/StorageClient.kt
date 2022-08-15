@@ -1,4 +1,4 @@
-package io.github.edy4c7.locationmapper.domains.interfaces.storage
+package io.github.edy4c7.locationmapper.domains.interfaces
 
 import java.nio.file.Path
 

@@ -1,4 +1,4 @@
-package io.github.edy4c7.locationmapper.domains.mapimagesources
+package io.github.edy4c7.locationmapper.domains.interfaces
 
 import io.github.edy4c7.locationmapper.domains.exceptions.MapImageSourceException
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location

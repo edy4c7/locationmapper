@@ -1,8 +1,8 @@
 package io.github.edy4c7.locationmapper.domains.services
 
 import io.github.edy4c7.locationmapper.domains.entities.Upload
-import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
-import io.github.edy4c7.locationmapper.domains.mapimagesources.MapImageSource
+import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
+import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
 import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.apache.commons.logging.Log

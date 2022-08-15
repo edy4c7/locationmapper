@@ -1,7 +1,6 @@
 package io.github.edy4c7.locationmapper.infrastructures
 
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
-import io.github.edy4c7.locationmapper.infrastructures.mapimagesources.MapQuestImageSource
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

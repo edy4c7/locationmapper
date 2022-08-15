@@ -1,6 +1,6 @@
-package io.github.edy4c7.locationmapper.infrastructures.storage
+package io.github.edy4c7.locationmapper.infrastructures
 
-import io.github.edy4c7.locationmapper.domains.interfaces.storage.StorageClient
+import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.Delete

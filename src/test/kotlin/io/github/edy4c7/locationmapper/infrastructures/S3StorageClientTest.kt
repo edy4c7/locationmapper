@@ -1,6 +1,5 @@
 package io.github.edy4c7.locationmapper.infrastructures
 
-import io.github.edy4c7.locationmapper.infrastructures.storage.S3StorageClient
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
