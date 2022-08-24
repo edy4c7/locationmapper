@@ -1,8 +1,6 @@
 package io.github.edy4c7.locationmapper.services
 
-import com.ninjasquad.springmockk.MockkBean
-import com.ninjasquad.springmockk.SpykBean
-import io.github.edy4c7.config.TestConfig
+import io.github.edy4c7.locationmapper.common.config.ApplicationProperties
 import io.github.edy4c7.locationmapper.domains.entities.Upload
 import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
 import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
@@ -10,24 +8,25 @@ import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
 import io.github.edy4c7.locationmapper.domains.services.MappingService
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import io.mockk.*
+import io.mockk.impl.annotations.InjectMockKs
+import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.SpyK
 import org.apache.commons.logging.Log
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
+import org.junit.jupiter.api.TestInstance
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipInputStream
 import kotlin.io.path.name
 
-@SpringBootTest
-@Import(TestConfig::class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 private class MappingServiceTests {
     companion object {
         val sentences = """
@@ -60,32 +59,37 @@ private class MappingServiceTests {
         val datetime: LocalDateTime = LocalDateTime.of(2022, 8, 12, 0, 12, 34)
     }
 
-    @MockkBean(relaxed = true)
+    @MockK(relaxed = true)
     private lateinit var mapImageSource: MapImageSource
 
-    @MockkBean(relaxed = true)
+    @MockK(relaxed = true)
     private lateinit var storageClient: StorageClient
 
-    @MockkBean(relaxed = true)
+    @MockK(relaxed = true)
     private lateinit var uploadRepository: UploadRepository
 
-    @MockkBean(relaxed = true)
+    @MockK(relaxed = true)
     private lateinit var log: Log
 
-    @SpykBean
-    private lateinit var workDir: Path
+    @SpyK
+    private var workDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("location-mapper-test")
 
-    @Value("\${storage.bucket}")
-    private lateinit var bucketName: String
+    private val applicationProperties = ApplicationProperties(
+        bucketName = "location-mapper-dev",
+        cdnOrigin = "https://cdn.example.com",
+        fileRetentionPeriod = 24
+    )
 
-    @Value("\${cdn}")
-    private lateinit var cdnOrigin: String
-
-    @Value("\${fileRetentionPeriod}")
-    private lateinit var fileRetentionPeriod: String
-
-    @Autowired
+    @InjectMockKs(injectImmutable = true)
     private lateinit var mappingService: MappingService
+
+    @BeforeAll
+    fun beforeAll() {
+        MockKAnnotations.init(this)
+        if (!Files.exists(workDir)) {
+            Files.createDirectory(workDir)
+        }
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -128,12 +132,12 @@ private class MappingServiceTests {
             mapImageSource.getMapImage(Location(36.0, 140.0))
             mapImageSource.getMapImage(Location(37.0, 141.0))
             mapImageSource.getMapImage(Location(38.0, 142.0))
-            storageClient.upload(bucketName, filePath.name, "locationmapper.zip", filePath)
+            storageClient.upload(applicationProperties.bucketName, filePath.name, "locationmapper.zip", filePath)
 
             uploadRepository.save(Upload(
                 id = id,
-                url = "$cdnOrigin/${filePath.name}",
-                expiredAt = datetime.plusHours(fileRetentionPeriod.toLong()),
+                url = "${applicationProperties.cdnOrigin}/${filePath.name}",
+                expiredAt = datetime.plusHours(applicationProperties.fileRetentionPeriod),
                 createdAt = datetime,
                 updatedAt = datetime
             ))
@@ -169,7 +173,7 @@ private class MappingServiceTests {
 
         verifyOrder {
             uploadRepository.findByExpiredAtLessThan(datetime)
-            storageClient.delete(bucketName, "1.zip", "2.zip")
+            storageClient.delete(applicationProperties.bucketName, "1.zip", "2.zip")
             uploadRepository.deleteAllById(listOf("1", "2"))
             log.info("2 files are deleted (${listOf("1.zip", "2.zip")}).")
         }

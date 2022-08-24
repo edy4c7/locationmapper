@@ -1,4 +1,4 @@
-package io.github.edy4c7.config
+package io.github.edy4c7.locationmapper.config
 
 import com.ninjasquad.springmockk.MockkBean
 import org.springframework.boot.test.context.TestConfiguration

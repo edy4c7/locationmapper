@@ -1,12 +1,12 @@
 package io.github.edy4c7.locationmapper.domains.services
 
+import io.github.edy4c7.locationmapper.common.config.ApplicationProperties
 import io.github.edy4c7.locationmapper.domains.entities.Upload
 import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
 import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
 import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.apache.commons.logging.Log
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
 import java.io.InputStream
@@ -25,9 +25,7 @@ internal class MappingService(
     private val storageClient: StorageClient,
     private val uploadRepository: UploadRepository,
     private val workDir: Path,
-    @Value("\${storage.bucket}") private val bucketName: String,
-    @Value("\${cdn}") private val cdnOrigin: String,
-    @Value("\${fileRetentionPeriod}") private val fileRetentionPeriod: String,
+    private val props: ApplicationProperties,
     private val log: Log,
 ) {
     companion object {
@@ -63,15 +61,15 @@ internal class MappingService(
             }
         }
 
-        val key = storageClient.upload(bucketName, output.name,
+        val key = storageClient.upload(props.bucketName, output.name,
             "locationmapper.${output.extension}", output)
         val timestamp = LocalDateTime.now()
 
         uploadRepository.save(
             Upload(
                 id = id,
-                url = "$cdnOrigin/$key",
-                expiredAt = timestamp.plusHours(fileRetentionPeriod.toLong()),
+                url = "${props.cdnOrigin}/$key",
+                expiredAt = timestamp.plusHours(props.fileRetentionPeriod),
                 createdAt = timestamp,
                 updatedAt = timestamp
             )
@@ -86,7 +84,7 @@ internal class MappingService(
             return
         }
 
-        val deleted = storageClient.delete(bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
+        val deleted = storageClient.delete(props.bucketName, *targets.map { "${it.id}.zip" }.toTypedArray())
         uploadRepository.deleteAllById(deleted.map { it.split(".")[0] })
         log.info("${deleted.size} files are deleted ($deleted).")
     }
