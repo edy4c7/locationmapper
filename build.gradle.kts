@@ -33,7 +33,12 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("com.ninja-squad:springmockk:3.0.1")
 	implementation("org.flywaydb:flyway-core:8.5.9")
+	implementation("com.amazonaws:aws-java-sdk-s3:1.12.293")
 	implementation("software.amazon.awssdk:s3:2.17.216")
+	testImplementation("org.testcontainers:junit-jupiter:1.17.3")
+	testImplementation("org.testcontainers:localstack:1.17.3")
+	testImplementation("org.testcontainers:mockserver:1.17.3")
+	testImplementation("org.mock-server:mockserver-client-java:5.14.0")
 }
 
 tasks.withType<KotlinCompile> {

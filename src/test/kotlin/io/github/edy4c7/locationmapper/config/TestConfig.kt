@@ -1,15 +1,38 @@
 package io.github.edy4c7.locationmapper.config
 
-import com.ninjasquad.springmockk.MockkBean
 import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
+import org.testcontainers.containers.localstack.LocalStackContainer
+import org.testcontainers.containers.localstack.LocalStackContainer.Service
+import org.testcontainers.utility.DockerImageName
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import java.net.http.HttpClient
 
 @TestConfiguration
 internal class TestConfig {
-    @MockkBean(relaxed = true)
-    lateinit var s3Client: S3Client
+    private val localStackImage = DockerImageName.parse("localstack/localstack:0.11.3")
 
-    @MockkBean(relaxed = true)
-    lateinit var httpClient: HttpClient
+    private val localStackContainer = LocalStackContainer(localStackImage).withServices(Service.S3)
+
+    init {
+        localStackContainer.start()
+    }
+
+    @Bean
+    fun localStack(): LocalStackContainer = localStackContainer
+
+    @Bean
+    fun s3Client(localStack: LocalStackContainer): S3Client {
+        return S3Client.builder()
+            .endpointOverride(localStack.getEndpointOverride(Service.S3))
+            .credentialsProvider(
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(localStack.accessKey, localStack.secretKey)
+                )
+            )
+            .region(Region.of(localStackContainer.region))
+            .build()
+    }
 }
