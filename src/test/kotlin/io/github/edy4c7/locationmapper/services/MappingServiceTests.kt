@@ -179,6 +179,9 @@ private class MappingServiceTests {
         }
     }
 
+    @BeforeAll
+
+
     @Test
     fun testNoTargetExpire() {
         every { uploadRepository.findByExpiredAtLessThan(datetime) } returns listOf()

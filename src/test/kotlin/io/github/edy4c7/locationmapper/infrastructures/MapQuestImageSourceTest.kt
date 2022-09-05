@@ -36,7 +36,7 @@ internal class MapQuestImageSourceTest {
     @BeforeAll
     fun beforeAll() {
         httpClient = mockk(relaxed = true)
-        mapQuestImageSource = MapQuestImageSource(httpClient, API_KEY)
+        mapQuestImageSource = MapQuestImageSource(httpClient, apiKey = API_KEY)
 
         mockkStatic(Files::class, UUID::class)
     }
