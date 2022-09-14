@@ -35,7 +35,7 @@ private class JobLaunchingServiceTests {
     private lateinit var jobRepository: MappingJobRepository
 
     @SpyK
-    private var workDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("location-mapper-test")
+    private var workDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper-test")
 
     @InjectMockKs
     private lateinit var service: JobLaunchingService

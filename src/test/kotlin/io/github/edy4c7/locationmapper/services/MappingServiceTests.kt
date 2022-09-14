@@ -72,7 +72,7 @@ private class MappingServiceTests {
     private lateinit var log: Log
 
     @SpyK
-    private var workDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("location-mapper-test")
+    private var workDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("locationmapper-test")
 
     private val applicationProperties = ApplicationProperties(
         bucketName = "location-mapper-dev",

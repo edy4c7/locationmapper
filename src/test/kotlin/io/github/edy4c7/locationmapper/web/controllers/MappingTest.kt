@@ -1,12 +1,17 @@
 package io.github.edy4c7.locationmapper.web.controllers
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.edy4c7.locationmapper.infrastructures.MapQuestImageSource
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
+import org.mockserver.verify.VerificationTimes
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -27,8 +32,10 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import java.net.http.HttpClient
 import java.util.*
+import java.util.zip.ZipInputStream
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -78,8 +85,6 @@ private class MappingTest {
     }
 
     companion object {
-        lateinit var onJobCompleted: () -> Unit
-
         val sentences = """
             ${'$'}GSENSOR,-64,30,16
             ${'$'}GSENSOR,-30,-22,60
@@ -130,18 +135,56 @@ private class MappingTest {
 
     @Test
     fun test() {
-        val responses = LinkedList<ByteArray>()
-        responses.add(byteArrayOf(0x12, 0x34))
-        responses.add(byteArrayOf(0x56, 0x78))
-        responses.add(byteArrayOf(0x0a, 0x0b))
+        val requests = ArrayList<List<String>>()
+        val expects = listOf(
+            byteArrayOf(0x12, 0x34),
+            byteArrayOf(0x56, 0x78),
+            byteArrayOf(0x0a, 0x0b)
+        )
+        val responses = LinkedList(expects)
 
         val msc = MockServerClient(mockServerContainer.host, mockServerContainer.serverPort)
         msc.`when`(request().withPath("/"))
-            .respond(response().withBody(responses.remove()))
+            .respond { hr ->
+                hr.queryStringParameterList.firstOrNull { it.name.matches("center") }?.let {
+                    requests.add(it.values[0].value.split(","))
+                }
 
-        mockMvc.perform(multipart("/mapping")
+                response().withBody(responses.remove())
+            }
+
+        val result = mockMvc.perform(multipart("/mapping")
             .file(MockMultipartFile("nmea", sentences.toByteArray())))
+            .andReturn()
 
-//        msc.verify(request().withPath("/"), VerificationTimes.exactly(responses.size))
+        val tr = object : TypeReference<Map<String, String>>() {}
+        val mapper = ObjectMapper()
+        val resMap = mapper.readValue(result.response.contentAsString, tr)
+
+        msc.verify(
+            request()
+                .withPath("/")
+                .withQueryStringParameter("format", "png"),
+            VerificationTimes.exactly(3)
+        )
+
+        assertEquals(35.249507, requests[0][0].toDouble(), 2.6e-4)
+        assertEquals(140.001594, requests[0][1].toDouble(), 2.6e-4)
+        assertEquals(35.2494215, requests[1][0].toDouble(), 2.6e-4)
+        assertEquals(140.0016845, requests[1][1].toDouble(), 2.6e-4)
+        assertEquals(35.24934217, requests[2][0].toDouble(), 2.6e-4)
+        assertEquals(140.0017745, requests[2][1].toDouble(), 2.6e-4)
+
+        val gor = GetObjectRequest.builder().bucket(bucketName).key("${resMap["id"]}.zip").build()
+        val obj = s3Client.getObjectAsBytes(gor)
+
+        ZipInputStream(obj.asInputStream()).use { zis ->
+            for ((i, e) in generateSequence { zis.nextEntry }.withIndex()) {
+                assertEquals(String.format("%02d.png", i), e.name)
+                val actual = ByteArray(2)
+                zis.read(actual, 0, actual.size)
+                assertArrayEquals(expects[i / 30], actual, i.toString())
+            }
+        }
     }
 }
