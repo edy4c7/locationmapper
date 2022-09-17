@@ -136,7 +136,7 @@ private class MappingTest {
     }
 
     @Test
-    fun test() {
+    fun testMapping() {
         val requests = ArrayList<List<Double>>()
         val expects = listOf(
             byteArrayOf(0x12, 0x34),
