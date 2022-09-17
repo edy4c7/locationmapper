@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.fail
 import org.mockserver.client.MockServerClient
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
@@ -33,6 +34,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import java.net.http.HttpClient
 import java.util.*
 import java.util.zip.ZipInputStream
@@ -175,8 +177,12 @@ private class MappingTest {
         assertEquals(35.24934217, requests[2][0].toDouble(), 2.6e-4)
         assertEquals(140.0017745, requests[2][1].toDouble(), 2.6e-4)
 
-        val gor = GetObjectRequest.builder().bucket(bucketName).key("${resMap["id"]}.zip").build()
-        val obj = s3Client.getObjectAsBytes(gor)
+        val obj = try {
+            val gor = GetObjectRequest.builder().bucket(bucketName).key("${resMap["id"]}.zip").build()
+            s3Client.getObjectAsBytes(gor)
+        } catch (nske: NoSuchKeyException) {
+            fail(nske)
+        }
 
         ZipInputStream(obj.asInputStream()).use { zis ->
             for ((i, e) in generateSequence { zis.nextEntry }.withIndex()) {
