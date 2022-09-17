@@ -137,7 +137,7 @@ private class MappingTest {
 
     @Test
     fun test() {
-        val requests = ArrayList<List<String>>()
+        val requests = ArrayList<List<Double>>()
         val expects = listOf(
             byteArrayOf(0x12, 0x34),
             byteArrayOf(0x56, 0x78),
@@ -149,7 +149,7 @@ private class MappingTest {
         msc.`when`(request().withPath("/"))
             .respond { hr ->
                 hr.queryStringParameterList.firstOrNull { it.name.matches("center") }?.let {
-                    requests.add(it.values[0].value.split(","))
+                    requests.add(it.values[0].value.split(",").map(String::toDouble))
                 }
 
                 response().withBody(responses.remove())
@@ -170,12 +170,12 @@ private class MappingTest {
             VerificationTimes.exactly(3)
         )
 
-        assertEquals(35.249507, requests[0][0].toDouble(), 2.6e-4)
-        assertEquals(140.001594, requests[0][1].toDouble(), 2.6e-4)
-        assertEquals(35.2494215, requests[1][0].toDouble(), 2.6e-4)
-        assertEquals(140.0016845, requests[1][1].toDouble(), 2.6e-4)
-        assertEquals(35.24934217, requests[2][0].toDouble(), 2.6e-4)
-        assertEquals(140.0017745, requests[2][1].toDouble(), 2.6e-4)
+        assertEquals(35.249507, requests[0][0], 2.6e-4)
+        assertEquals(140.001594, requests[0][1], 2.6e-4)
+        assertEquals(35.2494215, requests[1][0], 2.6e-4)
+        assertEquals(140.0016845, requests[1][1], 2.6e-4)
+        assertEquals(35.24934217, requests[2][0], 2.6e-4)
+        assertEquals(140.0017745, requests[2][1], 2.6e-4)
 
         val obj = try {
             val gor = GetObjectRequest.builder().bucket(bucketName).key("${resMap["id"]}.zip").build()
