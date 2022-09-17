@@ -16,7 +16,7 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-private class S3StorageClientTest {
+private class S3StorageClientTests {
     @MockK(relaxed = true)
     private lateinit var client: S3Client
 

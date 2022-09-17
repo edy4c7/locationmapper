@@ -21,7 +21,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class MapQuestImageSourceTest {
+internal class MapQuestImageSourceTests {
     companion object {
         const val BASE_URL = "https://www.mapquestapi.com/staticmap/v5/map"
         const val API_KEY = "API_KEY_123456"

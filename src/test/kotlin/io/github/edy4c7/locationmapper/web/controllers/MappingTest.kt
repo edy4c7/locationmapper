@@ -44,7 +44,7 @@ import java.util.zip.ZipInputStream
 @AutoConfigureMockMvc
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-private class MappingTest {
+private class MappingTests {
     @TestConfiguration
     class Configuration {
         companion object {
