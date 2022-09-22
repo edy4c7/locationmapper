@@ -1,25 +1,30 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { Button, Box, Stack } from '@mui/material';
 
 function App() {
+  const [fileName, setFileName] = React.useState('')
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Stack component="form" direction="row" spacing={2}>
+      <Stack direction="row" spacing={1} sx={{flex: "1 1 auto", border: '1px dashed grey' }}>
+        <Button
+          variant="contained"
+          component="label"
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          GPSログ(NMEA)を選択
+          <input
+            type="file"
+            hidden
+            onChange={(e) => setFileName(e.target.files?.[0].name ?? '')}
+          />
+        </Button>
+        <Stack direction="row" sx={{flex: "1 1 auto", alignItems: 'center'}}>
+          {fileName}
+        </Stack>
+      </Stack>
+      <Box>
+        <Button variant="contained" color='primary'>送信</Button>
+      </Box>
+    </Stack> 
   );
 }
 
