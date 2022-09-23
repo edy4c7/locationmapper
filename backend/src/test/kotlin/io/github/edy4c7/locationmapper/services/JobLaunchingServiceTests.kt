@@ -57,6 +57,8 @@ private class JobLaunchingServiceTests {
         val uuid = mockk<UUID>()
         every { uuid.toString() } returns id
         every { UUID.randomUUID() } returns uuid
+        val expect = MappingJob(id, BatchStatus.STARTED)
+        every { jobRepository.findByMappingId(any()) } returns expect
 
         val filePath = spyk<Path>(Files.createTempFile(workDir, "", ".nmea"))
         val ost = mockk<OutputStream>(relaxed = true)
@@ -64,7 +66,7 @@ private class JobLaunchingServiceTests {
         every { Files.createTempFile(any<Path>(), any(), any()) } returns filePath
         val ist = mockk<InputStream>(relaxed = true)
 
-        service.launchJob(ist)
+        val actual = service.launchJob(ist)
 
         verify { ist.transferTo(ost) }
         val params = JobParametersBuilder()
@@ -72,6 +74,8 @@ private class JobLaunchingServiceTests {
             .addString("input", filePath.toString())
             .toJobParameters()
         verify { jobLauncher.run(mappingJob, params) }
+
+        assertEquals(expect, actual)
     }
 
     @Test

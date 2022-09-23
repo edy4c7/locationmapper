@@ -20,7 +20,7 @@ internal class JobLaunchingService(
     private val workDir: Path,
 ) {
 
-    fun launchJob(nmea: InputStream): String {
+    fun launchJob(nmea: InputStream): MappingJob? {
         val filePath = Files.createTempFile(workDir, "", ".nmea")
         nmea.transferTo(filePath.outputStream())
         val id = UUID.randomUUID().toString()
@@ -33,7 +33,7 @@ internal class JobLaunchingService(
                 .toJobParameters()
         )
 
-        return id
+        return jobRepository.findByMappingId(id)
     }
 
     fun getJobProgress(id: String): MappingJob? {
