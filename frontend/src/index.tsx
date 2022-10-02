@@ -4,7 +4,6 @@ import { Container, createTheme, ThemeProvider, CssBaseline } from '@mui/materia
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { Provider } from './context/context';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -18,15 +17,13 @@ const theme = createTheme({
 
 root.render(
   <React.StrictMode>
-    <Provider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Container maxWidth="md">
-          <h1>Location Mapper</h1>
-          <App />
-        </Container>
-      </ThemeProvider>
-    </Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Container maxWidth="md">
+        <h1>Location Mapper</h1>
+        <App />
+      </Container>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

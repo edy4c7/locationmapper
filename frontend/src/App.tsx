@@ -1,41 +1,14 @@
 import React, { useState } from 'react';
 import { Button, Box, Stack } from '@mui/material';
-import { useAppContext } from './context/context';
-import JobStatus from './models/JobStatus';
-import MappingJob from './models/MappingJob';
-
-interface State {
-  id: string
-  status: JobStatus
-  file: File | null
-}
+import useApi from './api/useApi';
 
 function App() {
-  const { axios } = useAppContext()
-  const [ state, setState ] = useState<State>({
-    id: '',
-    status: 'UNKNOWN',
-    file: null
-  })
+  const [file, setFile] = useState<File>()
+  const [submit, state] = useApi()
 
-  const onSubmit = async (e: React.FormEvent) => {
+  function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if(state.file) {
-      const res = (await axios.postForm<MappingJob>('/mapping', {
-        'nmea': state.file
-      })).data
-
-      const {id, status} = res
-      setState({...state, id, status})
-      const timer = setInterval(async () => {
-        const res = (await axios.get<MappingJob>(`/mapping/${id}`)).data
-        const { status } = res
-
-        if(status !== 'STARTING' && status !== 'STARTED') {
-          clearInterval(timer)
-        }
-      }, 10000)
-    }
+    file && submit(file)
   }
 
   return (
@@ -52,13 +25,13 @@ function App() {
               hidden
               onChange={(e) => {
                 if(state && e.target.files?.[0]) {
-                  setState({...state, file: e.target.files?.[0]})
+                  setFile(e.target.files?.[0])
                 }
               }}
             />
           </Button>
           <Stack direction="row" sx={{flex: "1 1 auto", alignItems: 'center'}}>
-            {state.file?.name}
+            {file?.name}
           </Stack>
         </Stack>
         <Box>
