@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useCallback, useState } from 'react';
+import { useAppContext } from '../context/context';
 import JobStatus from '../models/JobStatus';
 import MappingJob from '../models/MappingJob';
 
@@ -8,18 +9,15 @@ interface State {
   status: JobStatus
 }
 
-const api = axios.create({
-  baseURL: 'http://localhost:8080'
-})
-
 export default function useApi() {
+  const { axios } = useAppContext()
   const [ state, setState ] = useState<State>({
     id: '',
     status: 'UNKNOWN',
   })
 
   const submit = useCallback(async (file: File) => {
-    const res = (await api.postForm<MappingJob>('/mapping', {
+    const res = (await axios.postForm<MappingJob>('/mapping', {
       'nmea': file
     })).data
 
@@ -27,7 +25,7 @@ export default function useApi() {
     setState({...state, id, status})
 
     const timer = setInterval(async () => {
-      const res = (await api.get<MappingJob>(`/mapping/${id}`)).data
+      const res = (await axios.get<MappingJob>(`/mapping/${id}`)).data
       const { status } = res
 
       setState(ps => ({...ps, status}))
@@ -36,7 +34,7 @@ export default function useApi() {
         clearInterval(timer)
       }
     }, 10000)
-  }, [state])
+  }, [axios, state])
 
   return [submit, state] as const
 }

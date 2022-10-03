@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Container, createTheme, ThemeProvider, CssBaseline } from '@mui/material';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { context } from './context/context'
+import axios from 'axios';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -15,15 +17,21 @@ const theme = createTheme({
   }
 })
 
+const myAxios = axios.create({
+  baseURL: 'http://localhost:8080'
+})
+
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Container maxWidth="md">
-        <h1>Location Mapper</h1>
-        <App />
-      </Container>
-    </ThemeProvider>
+    <context.Provider value={{axios: myAxios}}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="md">
+          <h1>Location Mapper</h1>
+          <App />
+        </Container>
+      </ThemeProvider>
+    </context.Provider>
   </React.StrictMode>
 );
 
