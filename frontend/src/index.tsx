@@ -5,7 +5,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { context } from './context/context'
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import { Provider } from 'inversify-react';
+import { Container as InversifyContainer } from 'inversify'
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -23,15 +25,23 @@ const myAxios = axios.create({
 
 root.render(
   <React.StrictMode>
-    <context.Provider value={{axios: myAxios}}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Container maxWidth="md">
-          <h1>Location Mapper</h1>
-          <App />
-        </Container>
-      </ThemeProvider>
-    </context.Provider>
+    <Provider container={() => {
+      const container = new InversifyContainer()
+      container.bind<AxiosInstance>('axios').toConstantValue(axios.create({
+        baseURL: 'http://localhost:8080'
+      }))
+      return container
+    }}>
+      <context.Provider value={{axios: myAxios}}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Container maxWidth="md">
+            <h1>Location Mapper</h1>
+            <App />
+          </Container>
+        </ThemeProvider>
+      </context.Provider>
+    </Provider>
   </React.StrictMode>
 );
 

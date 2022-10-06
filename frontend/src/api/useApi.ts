@@ -1,6 +1,6 @@
-import axios from 'axios';
+import { AxiosInstance } from 'axios';
+import { useInjection } from 'inversify-react';
 import { useCallback, useState } from 'react';
-import { useAppContext } from '../context/context';
 import JobStatus from '../models/JobStatus';
 import MappingJob from '../models/MappingJob';
 
@@ -10,7 +10,7 @@ interface State {
 }
 
 export default function useApi() {
-  const { axios } = useAppContext()
+  const axios = useInjection<AxiosInstance>('axios')
   const [ state, setState ] = useState<State>({
     id: '',
     status: 'UNKNOWN',
