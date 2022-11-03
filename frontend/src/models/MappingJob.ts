@@ -3,7 +3,7 @@ import JobStatus from "./JobStatus"
 interface MappingJob {
   id: string
   status: JobStatus
-  url: string|null
+  url?: string
 }
 
 export default MappingJob

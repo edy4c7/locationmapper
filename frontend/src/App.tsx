@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Box, Stack } from '@mui/material';
+import { Button, Box, Stack, LinearProgress } from '@mui/material';
 import useApi from './api/useApi';
 
 function App() {
@@ -16,6 +16,7 @@ function App() {
       <Stack component="form" direction="row" spacing={2} onSubmit={onSubmit}>
         <Stack direction="row" spacing={1} sx={{flex: "1 1 auto", border: '1px dashed grey' }}>
           <Button
+            disabled={state.isPolling}
             variant="contained"
             component="label"
           >
@@ -35,10 +36,10 @@ function App() {
           </Stack>
         </Stack>
         <Box>
-          <Button variant="contained" color='primary' type='submit'>送信</Button>
+          <Button disabled={state.isPolling} variant="contained" color='primary' type='submit'>送信</Button>
         </Box>
       </Stack> 
-      <Stack>{state.id ? state.status : ''}</Stack>
+      <LinearProgress sx={{margin: '4px 0', visibility: state.isPolling ? 'visible' : 'hidden'}}/>
     </Stack>
   );
 }

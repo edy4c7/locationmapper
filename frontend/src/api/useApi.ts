@@ -1,19 +1,42 @@
 import { AxiosInstance } from 'axios';
 import { useInjection } from 'inversify-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useReducer, useState } from 'react';
 import JobStatus from '../models/JobStatus';
 import MappingJob from '../models/MappingJob';
 
 interface State {
-  id: string
-  status: JobStatus
+  id?: string
+  status?: JobStatus
+  isPolling: boolean
+}
+
+type StartAction = {
+  type: 'START',
+  args: { id: string, status: JobStatus }
+}
+
+type UpdateAction = {
+  type: 'UPDATE',
+  args: { status: JobStatus }
+}
+
+type Action = UpdateAction | StartAction
+
+const reducer = (state: State, action: Action): State => {
+  const { status } = action.args
+  const isPolling = (status === 'STARTING' || status === 'STARTED')
+  switch (action.type) {
+    case 'START':
+      return { id: action.args.id, status, isPolling }
+    case 'UPDATE':
+      return { ...state, status, isPolling }
+  }
 }
 
 export default function useApi() {
   const axios = useInjection<AxiosInstance>('axios')
-  const [ state, setState ] = useState<State>({
-    id: '',
-    status: 'UNKNOWN',
+  const [ state, dispatch ] = useReducer(reducer, {
+    isPolling: false,
   })
 
   const submit = useCallback(async (file: File) => {
@@ -22,19 +45,19 @@ export default function useApi() {
     })).data
 
     const {id, status} = res
-    setState({...state, id, status})
+    dispatch({ type: 'START', args: {id, status} })
 
     const timer = setInterval(async () => {
       const res = (await axios.get<MappingJob>(`/mapping/${id}`)).data
       const { status } = res
 
-      setState(ps => ({...ps, status}))
+      dispatch({ type: 'UPDATE', args: { status } })
 
-      if(status !== 'STARTING' && status !== 'STARTED') {
+      if(!state.isPolling) {
         clearInterval(timer)
       }
     }, 10000)
-  }, [axios, state])
+  }, [axios, state.isPolling])
 
   return [submit, state] as const
 }
