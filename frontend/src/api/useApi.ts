@@ -53,11 +53,11 @@ export default function useApi() {
 
       dispatch({ type: 'UPDATE', args: { status } })
 
-      if(!state.isPolling) {
+      if(status !== 'STARTING' && status !== 'STARTED' ) {
         clearInterval(timer)
       }
     }, 10000)
-  }, [axios, state.isPolling])
+  }, [axios])
 
   return [submit, state] as const
 }
