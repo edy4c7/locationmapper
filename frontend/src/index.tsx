@@ -1,10 +1,9 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Container, createTheme, ThemeProvider, CssBaseline } from '@mui/material';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { context } from './context/context'
 import axios, { AxiosInstance } from 'axios';
 import { Provider } from 'inversify-react';
 import { Container as InversifyContainer } from 'inversify'
@@ -19,28 +18,22 @@ const theme = createTheme({
   }
 })
 
-const myAxios = axios.create({
-  baseURL: 'http://localhost:8080'
-})
-
 root.render(
   <React.StrictMode>
     <Provider container={() => {
       const container = new InversifyContainer()
       container.bind<AxiosInstance>('axios').toConstantValue(axios.create({
-        baseURL: 'http://localhost:8080'
+        baseURL: process.env.REACT_APP_API_URL
       }))
       return container
     }}>
-      <context.Provider value={{axios: myAxios}}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Container maxWidth="md">
-            <h1>Location Mapper</h1>
-            <App />
-          </Container>
-        </ThemeProvider>
-      </context.Provider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container maxWidth="md">
+          <h1>Location Mapper</h1>
+          <App />
+        </Container>
+      </ThemeProvider>
     </Provider>
   </React.StrictMode>
 );
