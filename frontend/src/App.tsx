@@ -40,6 +40,7 @@ function App() {
         </Box>
       </Stack> 
       <LinearProgress sx={{margin: '4px 0', visibility: state.isPolling ? 'visible' : 'hidden'}}/>
+      <Button variant="contained" disabled={!state.url} href={state.url}>ダウンロード</Button>
     </Stack>
   );
 }

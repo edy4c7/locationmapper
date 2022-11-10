@@ -8,6 +8,7 @@ interface State {
   id?: string
   status?: JobStatus
   isPolling: boolean
+  url?: string
 }
 
 type StartAction = {
@@ -20,16 +21,24 @@ type UpdateAction = {
   args: { status: JobStatus }
 }
 
-type Action = UpdateAction | StartAction
+type CompleteAction = {
+  type: 'COMPLETE',
+  args: { status: JobStatus, url?: string }
+}
+
+type Action = UpdateAction | StartAction | CompleteAction
 
 const reducer = (state: State, action: Action): State => {
   const { status } = action.args
   const isPolling = (status === 'STARTING' || status === 'STARTED')
   switch (action.type) {
     case 'START':
-      return { id: action.args.id, status, isPolling }
+      return { ...state, id: action.args.id, status, isPolling }
     case 'UPDATE':
       return { ...state, status, isPolling }
+    case 'COMPLETE':
+      const { url } = action.args
+      return { ...state, status, isPolling, url }
   }
 }
 
@@ -49,11 +58,12 @@ export default function useApi() {
 
     const timer = setInterval(async () => {
       const res = (await axios.get<MappingJob>(`/mapping/${id}`)).data
-      const { status } = res
+      const { status, url } = res
 
       dispatch({ type: 'UPDATE', args: { status } })
 
       if(status !== 'STARTING' && status !== 'STARTED' ) {
+        dispatch({ type: 'COMPLETE', args: { status, url } })
         clearInterval(timer)
       }
     }, 10000)
