@@ -9,4 +9,5 @@ data class ApplicationProperties(
     val bucketName: String,
     val cdnOrigin: String,
     val fileRetentionPeriod: Long,
+    val allowedOrigins: List<String>
 )
