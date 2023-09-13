@@ -1,6 +1,7 @@
 package io.github.edy4c7.locationmapper.services
 
 import io.github.edy4c7.locationmapper.common.config.ApplicationProperties
+import io.github.edy4c7.locationmapper.domains.entities.Progress
 import io.github.edy4c7.locationmapper.domains.entities.Upload
 import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
 import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.nio.file.Files
@@ -77,7 +79,8 @@ private class MappingServiceTests {
     private val applicationProperties = ApplicationProperties(
         bucketName = "location-mapper-dev",
         cdnOrigin = "https://cdn.example.com",
-        fileRetentionPeriod = 24
+        fileRetentionPeriod = 24,
+        listOf()
     )
 
     @InjectMockKs(injectImmutable = true)
@@ -125,22 +128,30 @@ private class MappingServiceTests {
         every { storageClient.upload(any(), any(), any(), any()) } answers { secondArg() }
         val ist = ByteArrayInputStream(sentences.toByteArray())
         every { uploadRepository.save(any()) } answers { firstArg() }
+        val sse = mockk<SseEmitter>(relaxed = true)
 
-        mappingService.map(id, ist)
+        mappingService.map(id, ist, sse)
 
         verifyOrder {
+            sse.send(Progress(3, 0, false))
             mapImageSource.getMapImage(Location(36.0, 140.0))
+            sse.send(Progress(3, 1, false))
             mapImageSource.getMapImage(Location(37.0, 141.0))
+            sse.send(Progress(3, 2, false))
             mapImageSource.getMapImage(Location(38.0, 142.0))
-            storageClient.upload(applicationProperties.bucketName, filePath.name, "locationmapper.zip", filePath)
+            sse.send(Progress(3, 3, false))
 
+            val url = "${applicationProperties.cdnOrigin}/${filePath.name}"
+            storageClient.upload(applicationProperties.bucketName, filePath.name, "locationmapper.zip", filePath)
             uploadRepository.save(Upload(
                 id = id,
-                url = "${applicationProperties.cdnOrigin}/${filePath.name}",
+                url = url,
                 expiredAt = datetime.plusHours(applicationProperties.fileRetentionPeriod),
                 createdAt = datetime,
                 updatedAt = datetime
             ))
+
+            sse.send(Progress(3, 3, true, url))
         }
 
         val expects = arrayOf(
@@ -178,9 +189,6 @@ private class MappingServiceTests {
             log.info("2 files are deleted (${listOf("1.zip", "2.zip")}).")
         }
     }
-
-    @BeforeAll
-
 
     @Test
     fun testNoTargetExpire() {

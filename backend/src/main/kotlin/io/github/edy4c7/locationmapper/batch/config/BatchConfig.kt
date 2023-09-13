@@ -1,7 +1,6 @@
 package io.github.edy4c7.locationmapper.batch.config
 
 import io.github.edy4c7.locationmapper.batch.steps.ExpiringTasklet
-import io.github.edy4c7.locationmapper.batch.steps.MappingTasklet
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
@@ -23,18 +22,6 @@ private class BatchConfig(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
 ) {
-    @Bean
-    fun mappingJob(mappingStep: Step): Job {
-        return jobBuilderFactory.get("mappingJob").start(mappingStep).build()
-    }
-
-    @Bean
-    @JobScope
-    fun mappingStep(mappingTasklet: MappingTasklet): Step {
-        return stepBuilderFactory.get("mapping")
-            .tasklet(mappingTasklet)
-            .build()
-    }
 
     @Bean
     fun expiringJob(expiringStep: Step): Job {

@@ -1,13 +1,16 @@
 package io.github.edy4c7.locationmapper.domains.services
 
 import io.github.edy4c7.locationmapper.common.config.ApplicationProperties
+import io.github.edy4c7.locationmapper.domains.entities.Progress
 import io.github.edy4c7.locationmapper.domains.entities.Upload
 import io.github.edy4c7.locationmapper.domains.interfaces.MapImageSource
 import io.github.edy4c7.locationmapper.domains.interfaces.StorageClient
 import io.github.edy4c7.locationmapper.domains.repositories.UploadRepository
 import io.github.edy4c7.locationmapper.domains.valueobjects.Location
 import org.apache.commons.logging.Log
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -34,20 +37,33 @@ internal class MappingService(
         const val GPRMC_HEADER = "\$GPRMC"
     }
 
-    fun map(id: String, input: InputStream) {
+    @Async
+    fun map(id: String, input: InputStream, sse: SseEmitter) {
+        try {
+            mapImpl(id, input, sse)
+            sse.complete()
+        } catch (e: Exception) {
+            sse.completeWithError(e)
+        }
+    }
+
+    private fun mapImpl(id: String, input: InputStream, sse: SseEmitter) {
         val sentences = BufferedReader(InputStreamReader(input)).use { br ->
             br.lines().filter { it.startsWith(GPRMC_HEADER) }.toList()
         }
 
-        val digits = (sentences.size * FPS).toString().length
+        val total = sentences.count()
+        sse.send(Progress(total, 0))
+
+        val digits = (total * FPS).toString().length
 
         val output = workDir.resolve("$id.zip")
 
         ZipOutputStream(output.outputStream()).use { zos ->
             var count = 0
-            sentences.forEach {
+            for((index, elm) in sentences.withIndex()) {
                 val tmp = Files.createTempFile(workDir, "", IMAGE_SUFFIX)
-                val location = Location.fromGprmc(it)
+                val location = Location.fromGprmc(elm)
 
                 mapSource.getMapImage(location).transferTo(tmp.outputStream())
                 for (i in 1..FPS) {
@@ -58,6 +74,8 @@ internal class MappingService(
                 }
 
                 tmp.deleteIfExists()
+
+                sse.send(Progress(total, index + 1))
             }
         }
 
@@ -65,15 +83,17 @@ internal class MappingService(
             "locationmapper.${output.extension}", output)
         val timestamp = LocalDateTime.now()
 
+        val url = "${props.cdnOrigin}/$key"
         uploadRepository.save(
             Upload(
                 id = id,
-                url = "${props.cdnOrigin}/$key",
+                url = url,
                 expiredAt = timestamp.plusHours(props.fileRetentionPeriod),
                 createdAt = timestamp,
                 updatedAt = timestamp
             )
         )
+        sse.send(Progress(total, total, true, url))
     }
 
     fun expire() {
